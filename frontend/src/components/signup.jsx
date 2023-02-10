@@ -15,7 +15,7 @@ export default function Signup(props) {
     });
     var config = {
       method: 'post',
-      url: 'https://malakh.space/api/user/register/',
+      url: 'https://sirkelin.cloud/api/user/register/',
       headers: {
         'Content-Type': 'application/json'
       },

@@ -27,7 +27,7 @@ export default function Login(props) {
 
     var config = {
       method: 'post',
-      url: 'https://malakh.space/api/user/login/',
+      url: 'https://sirkelin.cloud/api/user/login/',
       headers: { 
         'Content-Type': 'application/json'
       },
