@@ -1,0 +1,49 @@
+version: '3'
+services:
+  reverse-proxy:
+    restart: always
+    image: traefik:v2.9
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  backend:
+    restart: unless-stopped
+    image: backend
+    build:
+      context: ./backend
+      target: builder
+      dockerfile: ./backend/prod.Dockerfile
+    expose:
+      - "8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`sirkelin.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.admin.middlewares=api-stripprefix"
+      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.admin.priority=1"
+    volumes:
+      - ./backend:/go/src/alkuinvito/backend
+    depends_on: 
+      - reverse-proxy
+    command: reflex -r "\.go$$" -s -- sh -c "go run ./"
+  frontend:
+    restart: unless-stopped
+    image: frontend
+    build:
+      context: ./frontend
+      dockerfile: ./frontend/prod.Dockerfile
+    expose:
+      - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`sirkelin.cloud`) && PathPrefix(`/`)"
+      - "traefik.http.routers.admin.priority=2"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - reverse-proxy

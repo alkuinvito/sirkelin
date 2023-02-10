@@ -1,0 +1,45 @@
+version: '3'
+services:
+  reverse-proxy:
+    image: traefik:v2.9
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.watch=true"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  backend:
+    image: backend
+    build:
+      context: ./backend
+      dockerfile: ./dev.Dockerfile
+    expose:
+      - "8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`sirkelin.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.admin.middlewares=api-stripprefix"
+      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.admin.priority=1"
+    volumes:
+      - ./backend:/go/src/alkuinvito/backend
+    depends_on: 
+      - reverse-proxy
+  frontend:
+    image: frontend
+    build:
+      context: ./frontend
+      dockerfile: ./dev.Dockerfile
+    ports:
+      - 3000:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`sirkelin.cloud`) && PathPrefix(`/`)"
+      - "traefik.http.routers.admin.priority=2"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - reverse-proxy

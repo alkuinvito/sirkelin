@@ -1,0 +1,76 @@
+package utils
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+)
+
+type TokenClaims struct {
+	UserID uint `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+func CreateToken(username string, userID uint) (string, error) {
+	claims := TokenClaims{
+		userID,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			Issuer:    username,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		return "", err
+	}
+	return ss, nil
+}
+
+func ValidateToken(c *gin.Context) error {
+	tokenString := ExtractToken(c)
+
+	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET_KEY")), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ExtractToken(c *gin.Context) string {
+	token, err := c.Cookie("jwt")
+	if err != nil {
+		return ""
+	}
+
+	return token
+}
+
+func ExtractTokenUser(c *gin.Context) (uint, error) {
+	tokenString := ExtractToken(c)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(os.Getenv("SECRET_KEY")), nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return uint(claims["user_id"].(float64)), nil
+	}
+
+	return 0, err
+}
