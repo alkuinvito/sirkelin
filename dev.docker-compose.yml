@@ -1,4 +1,4 @@
-version: '3'
+version: "3.9"
 services:
   reverse-proxy:
     image: traefik:v2.9
@@ -13,28 +13,32 @@ services:
     image: backend
     build:
       context: ./backend
-      dockerfile: ./prod.Dockerfile
-    expose:
-      - "8080"
+      dockerfile: ./dev.Dockerfile
+    ports:
+      - "8080:8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`sirkelin.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`sirkel.in`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     volumes:
-      - ./backend:/go/src/alkuinvito/backend
+      - type: bind
+        source: ./backend
+        target: /go/src/github.com/alkuinvito/backend
+    working_dir: /go/src/github.com/alkuinvito/backend
     depends_on:
       - reverse-proxy
+    command: CompileDaemon -command="./malakh-api"
   frontend:
     image: frontend
     build:
       context: ./frontend
       dockerfile: ./dev.Dockerfile
-    ports:
-      - 3000:3000
+    expose:
+      - "3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`sirkelin.cloud`)"
+      - "traefik.http.routers.frontend.rule=Host(`sirkel.in`)"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public

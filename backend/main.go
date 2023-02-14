@@ -12,7 +12,6 @@ import (
 	"github.com/alkuinvito/malakh-api/controllers"
 	"github.com/alkuinvito/malakh-api/initializers"
 	"github.com/alkuinvito/malakh-api/middlewares"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,13 +22,6 @@ func init() {
 
 func main() {
 	router := gin.Default()
-
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{
-		"http://localhost",
-	}
-	config.AllowCredentials = true
-	router.Use(cors.New(config))
 
 	privateGroup := router.Group("/private")
 	privateGroup.Use(middlewares.RoomAccess())

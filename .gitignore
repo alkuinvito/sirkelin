@@ -1,5 +1,5 @@
 .env*
-malakh-api.exe*
+malakh-api*
 
 /frontend/node_modules
 /.pnp
