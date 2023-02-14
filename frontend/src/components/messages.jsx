@@ -26,7 +26,7 @@ function Loading() {
 }
 
 const fetchRooms = async () => {
-  const {data} = await Axios.get('https://sirkelin.in/api/private/')
+  const {data} = await Axios.get('https://sirkel.in/api/private/')
   const response = await data.data.rooms
 
   const roomList = response.map((room) => <li className='h-20 px-4 flex items-center rounded-lg gap-2 cursor-pointer hover:bg-[#404040]/30' key={room.RoomId}><Image src={UserIcon} className='w-10 h-10 '/>{room.Username}</li>)

@@ -15,7 +15,7 @@ export default function Signup(props) {
     });
     var config = {
       method: 'post',
-      url: 'https://sirkelin.in/api/user/register/',
+      url: 'https://sirkel.in/api/user/register/',
       headers: {
         'Content-Type': 'application/json'
       },

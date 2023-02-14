@@ -27,7 +27,7 @@ export default function Login(props) {
 
     var config = {
       method: 'post',
-      url: 'https://sirkelin.in/api/user/login/',
+      url: 'https://sirkel.in/api/user/login/',
       headers: { 
         'Content-Type': 'application/json'
       },
