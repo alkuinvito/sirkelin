@@ -12,6 +12,7 @@ import (
 
 type TokenClaims struct {
 	UserID uint `json:"user_id"`
+	UserName string `json:"user_name"`
 	jwt.RegisteredClaims
 }
 
@@ -19,10 +20,10 @@ func CreateToken(username string, userID uint) (string, error) {
 	jti := uuid.New()
 	claims := TokenClaims{
 		userID,
+		username,
 		jwt.RegisteredClaims{
 			ID: jti.String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 10)),
-			Issuer:    username,
 		},
 	}
 
