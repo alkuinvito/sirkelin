@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type TokenClaims struct {
@@ -15,10 +16,12 @@ type TokenClaims struct {
 }
 
 func CreateToken(username string, userID uint) (string, error) {
+	jti := uuid.New()
 	claims := TokenClaims{
 		userID,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			ID: jti.String(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 10)),
 			Issuer:    username,
 		},
 	}
