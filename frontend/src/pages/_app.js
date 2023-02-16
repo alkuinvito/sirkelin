@@ -1,15 +1,13 @@
 import '@/styles/globals.css'
 import { config } from '@fortawesome/fontawesome-svg-core'
 import '@fortawesome/fontawesome-svg-core/styles.css'
-import React, { useState } from 'react'
-import {LoginContext} from '@/components/Context.js'
+import { AuthContextProvider } from '@/context/AuthContext'
 config.autoAddCss = false
 
 export default function App({ Component, pageProps }) {
-  const [info, setInfo] = useState({username: '', picture: ''})
   return(
-    <LoginContext.Provider value={[info, setInfo]}>
+    <AuthContextProvider>
       <Component {...pageProps}/>
-    </LoginContext.Provider>
+    </AuthContextProvider>
   )
 }
