@@ -41,6 +41,9 @@ export default function Messages() {
       .then(data => {
         setRooms(data)
       })
+      .catch(error => {
+        console.error(error)
+      })
   }, [])
 
   return (

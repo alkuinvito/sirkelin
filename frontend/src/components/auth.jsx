@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGoogle } from '@fortawesome/free-brands-svg-icons'
 
 function Auth() {
-  const { firebaseSignIn, user } = UserAuth()
+  const { firebaseSignIn } = UserAuth()
   const signInHandler = async () => {
     try {
       await firebaseSignIn()

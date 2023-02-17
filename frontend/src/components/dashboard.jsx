@@ -1,9 +1,10 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import ErrorPage from 'next/error'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Montserrat, Yantramanav } from '@next/font/google'
-import React, { useState, useContext } from 'react'
+import React, { useState, useEffect } from 'react'
+import { UserAuth } from '@/context/AuthContext'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComment,
@@ -14,8 +15,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Messages from './messages'
 import Circle from './circle'
-import { LoginContext } from '@/components/Context'
-import Image from 'next/image'
 import UserIcon from 'src/asset/follower.png'
 
 const yantramanav = Yantramanav({
@@ -37,21 +36,21 @@ export default function Dashboard() {
   const router = useRouter()
   const { page } = router.query
   const [ view, setView ] = useState(null)
-  const [ info, _ ] = useContext(LoginContext)
+  const { firebaseSignOut, user } = UserAuth()
 
-  React.useEffect(() => {    
+  useEffect(() => {    
     switch(page) {
-        case "messages":
-          setView(<Messages />)
-          break
-        case "circle":
-          setView(<Circle />)
-          break
-        default:
-          <ErrorPage statusCode={404} /> //TODO: ganti ke error page
-          break
-      }
-    }, [ page ])
+      case "messages":
+        setView(<Messages />)
+        break
+      case "circle":
+        setView(<Circle />)
+        break
+      default:
+        <ErrorPage statusCode={404} /> //TODO: ganti ke error page
+        break
+    }
+  }, [ page ])
   const title = page.charAt(0).toUpperCase() + page.slice(1)
 
   return (
@@ -82,11 +81,11 @@ export default function Dashboard() {
               </div>
               <div className='m-4 p-2 rounded-lg'>
                 <div className='flex items-center gap-4'>
-                  <Image src={ UserIcon } className='w-10 h-10 '/>
+                  <Image className='rounded-full' src={user.photoURL} width={36} height={36}/>
                   <span className='w-full'>
-                    <b className='text-lg' style={yBold.style}>{ info.username }</b>
+                    <b className='text-lg' style={yBold.style}>{user.displayName}</b>
                   </span>
-                  <FontAwesomeIcon className='text-lg text-red-800 cursor-pointer' icon={ faArrowRightFromBracket } />
+                  <FontAwesomeIcon className='text-lg text-red-800 cursor-pointer' icon={faArrowRightFromBracket} onClick={firebaseSignOut} />
                 </div>
               </div>
             </div>
