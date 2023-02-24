@@ -16,7 +16,7 @@ services:
     build:
       context: ./backend
       target: builder
-      dockerfile: ./backend/prod.Dockerfile
+      dockerfile: ./prod.Dockerfile
     expose:
       - "8080"
     labels:
@@ -31,7 +31,7 @@ services:
     image: frontend
     build:
       context: ./frontend
-      dockerfile: ./frontend/prod.Dockerfile
+      dockerfile: ./prod.Dockerfile
     expose:
       - "3000"
     labels:
