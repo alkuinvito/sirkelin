@@ -26,6 +26,7 @@ services:
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     depends_on: 
       - reverse-proxy
+      command: reflex -r "\.go$$" -s -- sh -c "go run ./"
   frontend:
     restart: unless-stopped
     image: frontend
