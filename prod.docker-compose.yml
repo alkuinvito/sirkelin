@@ -21,7 +21,7 @@ services:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`sirkelin.in`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`sirkel.in`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     depends_on: 
@@ -37,6 +37,6 @@ services:
       - "3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`sirkelin.in`)"
+      - "traefik.http.routers.frontend.rule=Host(`sirkel.in`)"
     depends_on:
       - reverse-proxy
