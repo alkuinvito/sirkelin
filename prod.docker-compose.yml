@@ -1,4 +1,4 @@
-version: '3'
+version: "3.9"
 services:
   reverse-proxy:
     restart: always
@@ -16,26 +16,27 @@ services:
     build:
       context: ./backend
       target: builder
-      dockerfile: ./backend/prod.Dockerfile
+      dockerfile: ./prod.Dockerfile
     expose:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`sirkelin.in`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`sirkel.in`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     depends_on: 
       - reverse-proxy
+    command: reflex -r "\.go$$" -s -- sh -c "go run ./"
   frontend:
     restart: unless-stopped
     image: frontend
     build:
       context: ./frontend
-      dockerfile: ./frontend/prod.Dockerfile
+      dockerfile: ./prod.Dockerfile
     expose:
       - "3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`sirkelin.in`)"
+      - "traefik.http.routers.frontend.rule=Host(`sirkel.in`)"
     depends_on:
       - reverse-proxy
