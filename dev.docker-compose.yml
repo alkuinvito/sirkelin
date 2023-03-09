@@ -22,10 +22,7 @@ services:
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     volumes:
-      - type: bind
-        source: ./backend
-        target: /go/src/github.com/alkuinvito/backend
-    working_dir: /go/src/github.com/alkuinvito/backend
+      - ./backend:/go/src/github.com/alkuinvito/backend
     depends_on:
       - reverse-proxy
     command: CompileDaemon -command="./malakh-api"
@@ -44,3 +41,14 @@ services:
       - ./frontend/public:/app/public
     depends_on:
       - reverse-proxy
+  redis:
+    image: redis:7.0-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass test-redis
+    volumes: 
+      - cache:/data
+volumes:
+  cache:
+    driver: local

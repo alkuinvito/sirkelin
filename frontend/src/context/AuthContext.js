@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth'
 import { auth } from '@/firebase/clientApp'
 import { Axios } from 'axios'
+import { useRouter } from 'next/router'
 
 const AuthContext = createContext()
 
@@ -18,6 +19,7 @@ const createSession = async (url, idToken, csrfToken) => {
 
 export const AuthContextProvider = ({ children }) => {
   const [ user, setUser ] = useState({})
+  const router = useRouter()
 
   const firebaseSignIn = () => {
     const provider = new GoogleAuthProvider()
@@ -25,12 +27,15 @@ export const AuthContextProvider = ({ children }) => {
     signInWithPopup(auth, provider)
       .then(userCredential => {
         return userCredential.user.getIdToken().then(idToken => {
-          const csrfToken = getCookie('csrfToken')
-          return createSession('/api/user/sessionLogin/', idToken, csrfToken)
+          setUser({
+            displayName: userCredential.user.displayName,
+            photoURL: userCredential.user.photoURL
+          })
+          console.log(idToken)
+          router.push('/messages')
+          // const csrfToken = getCookie('csrfToken')
+          // return createSession('/api/user/sessionLogin/', idToken, csrfToken)
         })
-      })
-      .then(result => {
-        setUser(result.user)
       })
       .catch(error => {
         const errorCode = error.code
