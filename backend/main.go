@@ -18,8 +18,9 @@ import (
 func init() {
 	initializers.LoadEnvVar()
 	initializers.ConnectToDB()
-	initializers.InitializeAppDefault()
 }
+
+var app = initializers.InitializeAppDefault()
 
 func main() {
 	router := gin.Default()
