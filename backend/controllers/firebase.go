@@ -1,29 +1,53 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 
 	firebase "firebase.google.com/go"
-	"firebase.google.com/go/auth"
 	"github.com/gin-gonic/gin"
 )
 
-func verifyIDTokenAndCheckRevoked(ctx *gin.Context, app *firebase.App, idToken string) *auth.Token {
-	// [START verify_id_token_and_check_revoked_golang]
+func FirebaseHandler(rg *gin.RouterGroup) {
+	rg.POST("/verify", verifyIDToken)
+}
+
+type IDToken struct {
+	Token string `json:"idToken"`
+}
+
+func verifyIDToken(ctx *gin.Context) {
+	var idToken IDToken
+	ctx.Bind(&idToken)
+	err := verifyIDTokenAndCheckRevoked(ctx, &firebase.App{}, idToken.Token)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"data": gin.H{
+				"error": err,
+			},
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": "",
+	})
+}
+
+func verifyIDTokenAndCheckRevoked(ctx *gin.Context, app *firebase.App, idToken string) error {
 	client, err := app.Auth(ctx)
 	if err != nil {
-		log.Fatalf("error getting Auth client: %v\n", err)
+		return fmt.Errorf("failed getting Auth client")
 	}
 	token, err := client.VerifyIDTokenAndCheckRevoked(ctx, idToken)
 	if err != nil {
 		if err.Error() == "ID token has been revoked" {
-			// Token is revoked. Inform the user to reauthenticate or signOut() the user.
+			return fmt.Errorf("user must reauthenticate session")
 		} else {
-			// Token is invalid
+			return fmt.Errorf("id token is invalid")
 		}
 	}
 	log.Printf("Verified ID token: %v\n", token)
-	// [END verify_id_token_and_check_revoked_golang]
 
-	return token
+	return nil
 }

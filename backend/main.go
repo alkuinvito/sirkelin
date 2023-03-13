@@ -25,6 +25,9 @@ var app = initializers.InitializeAppDefault()
 func main() {
 	router := gin.Default()
 
+	firebaseGroup := router.Group("/firebase")
+	controllers.FirebaseHandler(firebaseGroup)
+
 	privateGroup := router.Group("/private")
 	privateGroup.Use(middlewares.RoomAccess())
 	controllers.PrivateHandler(privateGroup)
