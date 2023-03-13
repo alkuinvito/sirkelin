@@ -20,8 +20,6 @@ func init() {
 	initializers.ConnectToDB()
 }
 
-var app = initializers.InitializeAppDefault()
-
 func main() {
 	router := gin.Default()
 

@@ -6,21 +6,24 @@ import (
 	"net/http"
 
 	firebase "firebase.google.com/go"
+	"github.com/alkuinvito/malakh-api/initializers"
 	"github.com/gin-gonic/gin"
 )
+
+var app = initializers.InitializeAppDefault()
 
 func FirebaseHandler(rg *gin.RouterGroup) {
 	rg.POST("/verify", verifyIDToken)
 }
 
 type IDToken struct {
-	Token string `json:"idToken"`
+	IDToken string
 }
 
 func verifyIDToken(ctx *gin.Context) {
 	var idToken IDToken
 	ctx.Bind(&idToken)
-	err := verifyIDTokenAndCheckRevoked(ctx, &firebase.App{}, idToken.Token)
+	err := verifyIDTokenAndCheckRevoked(ctx, app, idToken.IDToken)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
@@ -38,7 +41,7 @@ func verifyIDToken(ctx *gin.Context) {
 func verifyIDTokenAndCheckRevoked(ctx *gin.Context, app *firebase.App, idToken string) error {
 	client, err := app.Auth(ctx)
 	if err != nil {
-		return fmt.Errorf("failed getting Auth client")
+		return err
 	}
 	token, err := client.VerifyIDTokenAndCheckRevoked(ctx, idToken)
 	if err != nil {

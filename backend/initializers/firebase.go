@@ -9,7 +9,7 @@ import (
 )
 
 func InitializeAppDefault() *firebase.App {
-	opt := option.WithCredentialsFile("../adminsdk-key.json")
+	opt := option.WithCredentialsFile("adminsdk-key.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		log.Fatalf("error initializing app: %v\n", err)
