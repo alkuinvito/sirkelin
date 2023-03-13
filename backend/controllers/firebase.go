@@ -24,9 +24,10 @@ func verifyIDToken(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
-				"error": err,
+				"error": err.Error(),
 			},
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
