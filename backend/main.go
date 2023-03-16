@@ -34,9 +34,6 @@ func main() {
 	roomGroup.Use(middlewares.RoomAccess())
 	controllers.RoomHandler(roomGroup)
 
-	userGroup := router.Group("/user")
-	controllers.UserHandler(userGroup)
-
 	srv := &http.Server{
 		Addr:    os.Getenv("PORT"),
 		Handler: router,
