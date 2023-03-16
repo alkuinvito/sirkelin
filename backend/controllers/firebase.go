@@ -1,57 +1,87 @@
 package controllers
 
 import (
-	"fmt"
-	"log"
 	"net/http"
+	"time"
 
-	firebase "firebase.google.com/go"
 	"github.com/alkuinvito/malakh-api/initializers"
+	"github.com/alkuinvito/malakh-api/models"
+	"github.com/alkuinvito/malakh-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
 var app = initializers.InitializeAppDefault()
 
 func FirebaseHandler(rg *gin.RouterGroup) {
-	rg.POST("/verify", verifyIDToken)
+	rg.POST("/", verifyIDToken)
 }
 
 type IDToken struct {
 	IDToken string
 }
 
-func verifyIDToken(ctx *gin.Context) {
+func verifyIDToken(c *gin.Context) {
 	var idToken IDToken
-	ctx.Bind(&idToken)
-	err := verifyIDTokenAndCheckRevoked(ctx, app, idToken.IDToken)
+	c.Bind(&idToken)
+
+	client, err := app.Auth(c)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"data": gin.H{
-				"error": err.Error(),
+				"error": "firebase admin sdk error",
 			},
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "",
-	})
-}
-
-func verifyIDTokenAndCheckRevoked(ctx *gin.Context, app *firebase.App, idToken string) error {
-	client, err := app.Auth(ctx)
-	if err != nil {
-		return err
-	}
-	token, err := client.VerifyIDTokenAndCheckRevoked(ctx, idToken)
+	token, err := client.VerifyIDTokenAndCheckRevoked(c, idToken.IDToken)
 	if err != nil {
 		if err.Error() == "ID token has been revoked" {
-			return fmt.Errorf("user must reauthenticate session")
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"data": gin.H{
+					"error": "user must reauthenticate",
+				},
+			})
 		} else {
-			return fmt.Errorf("id token is invalid")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"data": gin.H{
+					"error": "id token invalid",
+				},
+			})
 		}
+		return
 	}
-	log.Printf("Verified ID token: %v\n", token)
 
-	return nil
+	if time.Now().Unix()-token.IssuedAt > 5*60 {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"data": gin.H{
+				"error": "recent sign-in required",
+			},
+		})
+		return
+	}
+
+	user := &models.User{
+		ID:       token.Subject,
+		Fullname: token.Claims["name"].(string),
+		Picture:  token.Claims["picture"].(string),
+		Email:    token.Claims["email"].(string),
+	}
+	user.UserAuthenticate()
+
+	jwt, err := utils.CreateToken(token.Subject)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": "failed to generate jwt",
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"access_token": jwt,
+		},
+	})
 }
