@@ -7,11 +7,11 @@ import (
 )
 
 type Room struct {
-	ID uint
-	Name string
-	Picture string
-	Users    []*User `gorm:"many2many:user_rooms"`
-	Messages []Message
+	ID        uint
+	Name      string
+	Picture   string
+	Users     []*User `gorm:"many2many:user_rooms"`
+	Messages  []Message
 	IsPrivate bool `gorm:"not null"`
 	CreatedAt time.Time
 }
@@ -31,7 +31,7 @@ func (room *Room) PullMessages() error {
 	return nil
 }
 
-func (room *Room) GetRoomPrivillege(userId uint) bool {
+func (room *Room) GetRoomPrivillege(userId string) bool {
 	var rows int64
 	initializers.DB.Table("user_rooms").Where("room_id = ? AND user_id = ?", room.ID, userId).Count(&rows)
 
@@ -58,7 +58,7 @@ func InsertMessage(message *Message) error {
 	return nil
 }
 
-func RoomList(userId uint) []Room {
+func RoomList(userId string) []Room {
 	var roomList []Room
 
 	err := initializers.DB.Table("user_rooms").Where("user_rooms.user_id = ?", userId).Joins("join rooms on rooms.id = user_rooms.room_id").Where("is_private = ?", false).Scan(&roomList).Error
