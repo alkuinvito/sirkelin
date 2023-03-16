@@ -10,21 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type TokenClaims struct {
-	UserID uint `json:"user_id"`
-	UserName string `json:"user_name"`
-	jwt.RegisteredClaims
-}
-
-func CreateToken(username string, userID uint) (string, error) {
+func CreateToken(userId string) (string, error) {
 	jti := uuid.New()
-	claims := TokenClaims{
-		userID,
-		username,
-		jwt.RegisteredClaims{
-			ID: jti.String(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 10)),
-		},
+	claims := jwt.RegisteredClaims{
+		Subject:   userId,
+		ID:        jti.String(),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -58,7 +49,7 @@ func ExtractToken(c *gin.Context) string {
 	return token
 }
 
-func ExtractTokenUser(c *gin.Context) (uint, error) {
+func ExtractTokenUser(c *gin.Context) (string, error) {
 	tokenString := ExtractToken(c)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -69,12 +60,12 @@ func ExtractTokenUser(c *gin.Context) (uint, error) {
 	})
 
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return uint(claims["user_id"].(float64)), nil
+		return claims["sub"].(string), nil
 	}
 
-	return 0, err
+	return "", err
 }
