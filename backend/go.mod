@@ -1,4 +1,4 @@
-module github.com/alkuinvito/malakh-api
+module github.com/alkuinvito/sirkelin
 
 go 1.19
 

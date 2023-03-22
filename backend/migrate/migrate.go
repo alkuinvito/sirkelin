@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/alkuinvito/malakh-api/initializers"
-	"github.com/alkuinvito/malakh-api/models"
+	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/alkuinvito/sirkelin/models"
 )
 
 func init() {

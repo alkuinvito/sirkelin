@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alkuinvito/malakh-api/controllers"
-	"github.com/alkuinvito/malakh-api/initializers"
-	"github.com/alkuinvito/malakh-api/middlewares"
+	"github.com/alkuinvito/sirkelin/controllers"
+	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/alkuinvito/sirkelin/middlewares"
 	"github.com/gin-gonic/gin"
 )
 

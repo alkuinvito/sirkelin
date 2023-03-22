@@ -3,8 +3,8 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/alkuinvito/malakh-api/models"
-	"github.com/alkuinvito/malakh-api/utils"
+	"github.com/alkuinvito/sirkelin/models"
+	"github.com/alkuinvito/sirkelin/utils"
 	"github.com/gin-gonic/gin"
 )
 

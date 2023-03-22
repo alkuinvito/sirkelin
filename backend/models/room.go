@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/alkuinvito/malakh-api/initializers"
+	"github.com/alkuinvito/sirkelin/initializers"
 )
 
 type Room struct {
