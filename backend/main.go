@@ -23,6 +23,8 @@ func init() {
 func main() {
 	router := gin.Default()
 
+	gin.SetMode(os.Getenv("APP_MODE"))
+
 	firebaseGroup := router.Group("/firebase")
 	controllers.FirebaseHandler(firebaseGroup)
 
