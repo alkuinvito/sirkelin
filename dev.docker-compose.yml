@@ -32,7 +32,7 @@ services:
       - traefik
       - redis
       - postgres
-    command: CompileDaemon -command="./malakh-api"
+    command: CompileDaemon -command="./sirkelin"
   frontend:
     image: frontend
     build:
