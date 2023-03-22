@@ -12,15 +12,29 @@ func Handle() *gin.Engine {
 	gin.SetMode(os.Getenv("APP_MODE"))
 
 	authGroup := router.Group("/auth")
-	controllers.AuthHandler(authGroup)
+	{
+		authGroup.POST("/sign-in", controllers.SignIn)
+	}
 
 	privateGroup := router.Group("/private")
-	privateGroup.Use(middlewares.RoomAccess())
-	controllers.PrivateHandler(privateGroup)
+	{
+		privateGroup.Use(middlewares.RoomAccess())
+		privateGroup.GET("/", controllers.GetPrivateList)
+		privateGroup.POST("create", controllers.CreatePrivateRoom)
+	}
 
 	roomGroup := router.Group("/room")
-	roomGroup.Use(middlewares.RoomAccess())
-	controllers.RoomHandler(roomGroup)
+	{
+		roomGroup.Use(middlewares.RoomAccess())
+		roomGroup.GET("/", controllers.GetRoomList)
+		roomGroup.POST("/create", controllers.CreateRoom)
+		messageHandler := roomGroup.Group("/:id")
+		{
+			messageHandler.Use(middlewares.RoomPrivillege())
+			messageHandler.POST("/", controllers.SendMessage)
+			messageHandler.GET("/", controllers.GetMessages)
+		}
+	}
 
 	return router
 }
