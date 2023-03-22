@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/alkuinvito/sirkelin/router"
 	"log"
 	"net/http"
 	"os"
@@ -9,10 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alkuinvito/sirkelin/controllers"
 	"github.com/alkuinvito/sirkelin/initializers"
-	"github.com/alkuinvito/sirkelin/middlewares"
-	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -21,24 +19,11 @@ func init() {
 }
 
 func main() {
-	router := gin.Default()
-
-	gin.SetMode(os.Getenv("APP_MODE"))
-
-	firebaseGroup := router.Group("/firebase")
-	controllers.FirebaseHandler(firebaseGroup)
-
-	privateGroup := router.Group("/private")
-	privateGroup.Use(middlewares.RoomAccess())
-	controllers.PrivateHandler(privateGroup)
-
-	roomGroup := router.Group("/room")
-	roomGroup.Use(middlewares.RoomAccess())
-	controllers.RoomHandler(roomGroup)
+	routesHandler := router.Handle()
 
 	srv := &http.Server{
 		Addr:    os.Getenv("PORT"),
-		Handler: router,
+		Handler: routesHandler,
 	}
 
 	go func() {
