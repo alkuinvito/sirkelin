@@ -5,7 +5,6 @@ import (
 	"firebase.google.com/go/auth"
 	"github.com/alkuinvito/sirkelin/models"
 	"github.com/alkuinvito/sirkelin/utils"
-	"github.com/google/uuid"
 	"net/http"
 	"time"
 
@@ -67,29 +66,19 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	if req.ClientID == "postman" {
-		uid := uuid.New().String()
-		accessToken, _ := utils.CreateToken(uid, "admin istrator", "admin@sirkel.in")
-		refreshToken, _ := utils.CreateRefreshToken(uid)
-		c.SetCookie("refresh_token", refreshToken, 3600, "/", "localhost", false, false)
-		c.JSON(http.StatusOK, gin.H{
-			"data": SignInResponse{
-				TokenType:   utils.TokenType,
-				AccessToken: accessToken,
-				ExpiresIn:   utils.ExpiresIn,
+	client, err := utils.VerifyClientID(req.ClientID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": "unknown client type",
 			},
 		})
 		return
 	}
 
-	err = utils.VerifyClientID(req.ClientID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data": gin.H{
-				"error": err.Error(),
-			},
-		})
-		return
+	switch client {
+	case utils.NextJS:
+
 	}
 
 	token, err := verifyIDToken(c, req.IDToken)
@@ -123,7 +112,7 @@ func SignIn(c *gin.Context) {
 	}
 
 	refreshToken, _ := utils.CreateRefreshToken(token.Subject)
-	c.SetCookie("refresh_token", refreshToken, 3600, "/", "localhost", false, false)
+	utils.SetRefreshMethod(c, client, refreshToken)
 	c.JSON(http.StatusOK, gin.H{
 		"data": SignInResponse{
 			TokenType:   utils.TokenType,
@@ -131,4 +120,8 @@ func SignIn(c *gin.Context) {
 			AccessToken: accessToken,
 		},
 	})
+}
+
+func RefreshTokens(c *gin.Context) {
+
 }
