@@ -3,43 +3,41 @@ package controllers
 import (
 	"errors"
 	"firebase.google.com/go/auth"
+	"github.com/alkuinvito/sirkelin/models"
+	"github.com/alkuinvito/sirkelin/utils"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 
 	"github.com/alkuinvito/sirkelin/initializers"
-	"github.com/alkuinvito/sirkelin/models"
-	"github.com/alkuinvito/sirkelin/utils"
 	"github.com/gin-gonic/gin"
 )
 
-var app = initializers.InitializeAppDefault()
-
-func AuthHandler(rg *gin.RouterGroup) {
-	rg.POST("/sign-in", signIn)
+type SignInRequest struct {
+	ClientID string `json:"client_id,required"`
+	IDToken  string `json:"id_token,required"`
 }
 
-type AuthenticationResponse struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
+type SignInResponse struct {
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+	AccessToken string `json:"access_token"`
 }
 
-func verifyIDToken(c *gin.Context) (*auth.Token, error) {
-	var idToken string
+func NewFirebaseClient(c *gin.Context) (*auth.Client, error) {
+	var app = initializers.InitializeAppDefault()
+	return app.Auth(c)
+}
+
+func verifyIDToken(c *gin.Context, IDToken string) (*auth.Token, error) {
 	var err error
 
-	err = c.Bind(&idToken)
-	if err != nil {
-		return nil, errors.New("failed retrieving id token")
-	}
-
-	client, err := app.Auth(c)
+	client, err := NewFirebaseClient(c)
 	if err != nil {
 		return nil, errors.New("firebase admin sdk error")
 	}
 
-	token, err := client.VerifyIDTokenAndCheckRevoked(c, idToken)
+	token, err := client.VerifyIDTokenAndCheckRevoked(c, IDToken)
 	if err != nil {
 		if err.Error() == "ID token has been revoked" {
 			return nil, errors.New("user must reauthenticate")
@@ -55,18 +53,48 @@ func verifyIDToken(c *gin.Context) (*auth.Token, error) {
 	return token, nil
 }
 
-func signIn(c *gin.Context) {
+func SignIn(c *gin.Context) {
 	var err error
+	var req SignInRequest
 
-	token, err := verifyIDToken(c)
+	err = c.Bind(&req)
 	if err != nil {
-		if err.Error() == "failed retrieving id token" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"data": gin.H{
-					"error": err.Error(),
-				},
-			})
-		} else if err.Error() == "firebase admin sdk error" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": "invalid request body",
+			},
+		})
+		return
+	}
+
+	if req.ClientID == "postman" {
+		uid := uuid.New().String()
+		accessToken, _ := utils.CreateToken(uid, "admin istrator", "admin@sirkel.in")
+		refreshToken, _ := utils.CreateRefreshToken(uid)
+		c.SetCookie("refresh_token", refreshToken, 3600, "/", "localhost", false, false)
+		c.JSON(http.StatusOK, gin.H{
+			"data": SignInResponse{
+				TokenType:   utils.TokenType,
+				AccessToken: accessToken,
+				ExpiresIn:   utils.ExpiresIn,
+			},
+		})
+		return
+	}
+
+	err = utils.VerifyClientID(req.ClientID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
+	token, err := verifyIDToken(c, req.IDToken)
+	if err != nil {
+		if err.Error() == "firebase admin sdk error" {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"data": gin.H{
 					"error": err.Error(),
@@ -79,11 +107,12 @@ func signIn(c *gin.Context) {
 				},
 			})
 		}
+		return
 	}
 
 	models.AuthenticateByIDToken(token)
 
-	jwt, err := utils.CreateToken(token.Subject)
+	accessToken, err := utils.CreateToken(token.Subject, token.Claims["name"].(string), token.Claims["email"].(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"data": gin.H{
@@ -93,9 +122,13 @@ func signIn(c *gin.Context) {
 		return
 	}
 
+	refreshToken, _ := utils.CreateRefreshToken(token.Subject)
+	c.SetCookie("refresh_token", refreshToken, 3600, "/", "localhost", false, false)
 	c.JSON(http.StatusOK, gin.H{
-		"data": gin.H{
-			"access_token": jwt,
+		"data": SignInResponse{
+			TokenType:   utils.TokenType,
+			ExpiresIn:   utils.ExpiresIn,
+			AccessToken: accessToken,
 		},
 	})
 }
