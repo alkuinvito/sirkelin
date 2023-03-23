@@ -31,7 +31,7 @@ func (room *Room) PullMessages() error {
 	return nil
 }
 
-func (room *Room) GetRoomPrivillege(userId string) bool {
+func (room *Room) GetRoomPrivilege(userId string) bool {
 	var rows int64
 	initializers.DB.Table("user_rooms").Where("room_id = ? AND user_id = ?", room.ID, userId).Count(&rows)
 

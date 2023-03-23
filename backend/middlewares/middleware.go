@@ -23,14 +23,12 @@ func RoomAccess() gin.HandlerFunc {
 	}
 }
 
-func RoomPrivillege() gin.HandlerFunc {
+func RoomPrivilege() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var roomId models.RoomId
 		var room models.Room
-		var err error
-		var id uint
 
-		if err = c.ShouldBindUri(&roomId); err != nil {
+		if err := c.ShouldBindUri(&roomId); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"data": gin.H{
 					"error": "Invalid room id",
@@ -39,7 +37,7 @@ func RoomPrivillege() gin.HandlerFunc {
 			return
 		}
 
-		id, err = utils.ExtractTokenUser(c)
+		id, err := utils.GetTokenSubject(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
@@ -51,7 +49,7 @@ func RoomPrivillege() gin.HandlerFunc {
 		}
 
 		room.ID = roomId.ID
-		if room.GetRoomPrivillege(id) {
+		if room.GetRoomPrivilege(id) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"data": gin.H{
 					"error": "User is not member of the room",
