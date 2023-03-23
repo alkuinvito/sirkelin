@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,12 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateToken(userId string) (string, error) {
-	jti := uuid.New()
+func CreateToken(uid string) (string, error) {
+	jti := uuid.New().String()
+	exp := jwt.NewNumericDate(time.Now().Add(time.Hour))
 	claims := jwt.RegisteredClaims{
-		Subject:   userId,
-		ID:        jti.String(),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		Subject:   uid,
+		ID:        jti,
+		ExpiresAt: exp,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -27,45 +29,49 @@ func CreateToken(userId string) (string, error) {
 }
 
 func ValidateToken(c *gin.Context) error {
-	tokenString := ExtractToken(c)
-
-	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET_KEY")), nil
-	})
-
+	claims, err := DecodeTokenClaims(c)
 	if err != nil {
 		return err
+	}
+
+	if !claims.VerifyExpiresAt(time.Now().Unix(), true) {
+		return errors.New("token expired")
 	}
 
 	return nil
 }
 
-func ExtractToken(c *gin.Context) string {
-	token, err := c.Cookie("jwt")
+func DecodeTokenClaims(c *gin.Context) (jwt.MapClaims, error) {
+	token, err := ExtractTokenHeader(c)
 	if err != nil {
-		return ""
+		return nil, err
 	}
 
-	return token
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("failed mapping claims")
+	}
+
+	return claims, nil
 }
 
-func ExtractTokenUser(c *gin.Context) (string, error) {
-	tokenString := ExtractToken(c)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
+func ExtractTokenHeader(c *gin.Context) (*jwt.Token, error) {
+	bearerToken := c.GetHeader("Authorization")
+	tokenString := strings.Split(bearerToken, " ")
 
+	return jwt.Parse(tokenString[1], func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
 		return []byte(os.Getenv("SECRET_KEY")), nil
 	})
+}
 
+func GetTokenSubject(c *gin.Context) (string, error) {
+	claims, err := DecodeTokenClaims(c)
 	if err != nil {
 		return "", err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["sub"].(string), nil
-	}
-
-	return "", err
+	return claims["sub"].(string), nil
 }
