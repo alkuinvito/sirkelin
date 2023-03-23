@@ -67,17 +67,8 @@ func CreateToken(uid, fullname, email string) (string, error) {
 	return SignToken(claims)
 }
 
-func DecodeTokenClaims(token *jwt.Token) (jwt.MapClaims, error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("failed mapping claims")
-	}
-
-	return claims, nil
-}
-
-func DecodeTokenString(tokenString string) (*jwt.Token, error) {
-	return jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+func DecodeToken(tokenString string) (*AccessToken, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &AccessToken{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
@@ -85,20 +76,15 @@ func DecodeTokenString(tokenString string) (*jwt.Token, error) {
 		b64.StdEncoding.Encode(decoded, []byte(os.Getenv("SECRET_KEY")))
 		return decoded, nil
 	})
-}
-
-func DecodeToken(tokenString string) (jwt.MapClaims, error) {
-	token, err := DecodeTokenString(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	dec, err := DecodeTokenClaims(token)
-	if err != nil {
-		return nil, err
+	if claims, ok := token.Claims.(*AccessToken); ok && token.Valid {
+		return claims, nil
 	}
 
-	return dec, nil
+	return nil, err
 }
 
 func ExtractTokenHeader(c *gin.Context) (string, error) {
@@ -113,12 +99,12 @@ func ExtractTokenHeader(c *gin.Context) (string, error) {
 }
 
 func GetTokenSubject(token string) (string, error) {
-	claims, err := DecodeToken(token)
+	decoded, err := DecodeToken(token)
 	if err != nil {
 		return "", err
 	}
 
-	return claims["sub"].(string), nil
+	return decoded.Identities.UserID, nil
 }
 
 func SignToken(claims jwt.Claims) (string, error) {
@@ -138,12 +124,7 @@ func ValidateToken(c *gin.Context) error {
 		return err
 	}
 
-	claims, err := DecodeToken(token)
-	if err != nil {
-		return err
-	}
-
-	err = claims.Valid()
+	_, err = DecodeToken(token)
 	if err != nil {
 		return err
 	}
