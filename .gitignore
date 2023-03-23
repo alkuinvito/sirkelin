@@ -1,5 +1,5 @@
 .env*
-malakh-api*
+sirkelin*
 *key.json
 /frontend/node_modules
 /postgres-data
