@@ -2,25 +2,33 @@ package controllers
 
 import (
 	"errors"
+	"net/http"
+	"time"
+
 	"firebase.google.com/go/auth"
 	"github.com/alkuinvito/sirkelin/models"
 	"github.com/alkuinvito/sirkelin/utils"
-	"net/http"
-	"time"
 
 	"github.com/alkuinvito/sirkelin/initializers"
 	"github.com/gin-gonic/gin"
 )
 
-type SignInRequest struct {
-	ClientID string `json:"client_id,required"`
-	IDToken  string `json:"id_token,required"`
+type AuthRequest struct {
+	ClientID string `json:"client_id"`
+	IDToken  string `json:"id_token"`
 }
 
-type SignInResponse struct {
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int    `json:"expires_in"`
-	AccessToken string `json:"access_token"`
+type AuthResponse struct {
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+}
+
+type RefreshRequest struct {
+	ClientID     string `json:"client_id"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 func NewFirebaseClient(c *gin.Context) (*auth.Client, error) {
@@ -54,7 +62,7 @@ func verifyIDToken(c *gin.Context, IDToken string) (*auth.Token, error) {
 
 func SignIn(c *gin.Context) {
 	var err error
-	var req SignInRequest
+	var req AuthRequest
 
 	err = c.Bind(&req)
 	if err != nil {
@@ -114,7 +122,7 @@ func SignIn(c *gin.Context) {
 	refreshToken, _ := utils.CreateRefreshToken(token.Subject)
 	utils.SetRefreshMethod(c, client, refreshToken)
 	c.JSON(http.StatusOK, gin.H{
-		"data": SignInResponse{
+		"data": AuthResponse{
 			TokenType:   utils.TokenType,
 			ExpiresIn:   utils.ExpiresIn,
 			AccessToken: accessToken,
@@ -123,5 +131,69 @@ func SignIn(c *gin.Context) {
 }
 
 func RefreshTokens(c *gin.Context) {
+	var err error
+	var req RefreshRequest
 
+	err = c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": "invalid request body",
+			},
+		})
+		return
+	}
+
+	client, err := utils.VerifyClientID(req.ClientID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
+	tokenString, err := utils.GetClientRefreshToken(c, client)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": "failed retrieving refresh token",
+			},
+		})
+		return
+	}
+
+	refreshToken, err := utils.DecodeToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
+	if utils.CheckBlacklist(c, refreshToken.ID) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"data": gin.H{
+				"error": "blocked refresh token",
+			},
+		})
+		return
+	}
+
+	newRefreshToken, _ := utils.CreateRefreshToken(refreshToken.ID)
+	utils.SetRefreshMethod(c, client, newRefreshToken)
+	utils.SetBlacklist(c, refreshToken.ID)
+
+	token, _ := utils.DecodeToken(req.AccessToken)
+	newToken, _ := utils.CreateToken(token.Subject, token.Identities.Fullname, token.Identities.Email)
+	c.JSON(http.StatusOK, gin.H{
+		"data": AuthResponse{
+			TokenType:   utils.TokenType,
+			AccessToken: newToken,
+			ExpiresIn:   utils.ExpiresIn,
+		},
+	})
 }

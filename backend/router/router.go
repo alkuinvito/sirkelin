@@ -14,6 +14,7 @@ func Handle() *gin.Engine {
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/sign-in", controllers.SignIn)
+		authGroup.GET("/refresh", controllers.RefreshTokens)
 	}
 
 	privateGroup := router.Group("/private")
@@ -30,7 +31,7 @@ func Handle() *gin.Engine {
 		roomGroup.POST("/create", controllers.CreateRoom)
 		messageHandler := roomGroup.Group("/:id")
 		{
-			messageHandler.Use(middlewares.RoomPrivillege())
+			messageHandler.Use(middlewares.RoomPrivilege())
 			messageHandler.POST("/", controllers.SendMessage)
 			messageHandler.GET("/", controllers.GetMessages)
 		}
