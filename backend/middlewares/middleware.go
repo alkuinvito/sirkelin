@@ -13,7 +13,7 @@ func RoomAccess() gin.HandlerFunc {
 		if err := utils.ValidateToken(c); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
-					"error": "Invalid token",
+					"error": "invalid bearer token",
 				},
 			})
 			c.Abort()
@@ -25,34 +25,38 @@ func RoomAccess() gin.HandlerFunc {
 
 func RoomPrivilege() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var roomId models.RoomId
+		var param models.RoomIDParams
 		var room models.Room
+		var err error
 
-		if err := c.ShouldBindUri(&roomId); err != nil {
+		err = c.ShouldBindUri(&param)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"data": gin.H{
-					"error": "Invalid room id",
-				},
-			})
-			return
-		}
-
-		id, err := utils.GetTokenSubject(c)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"data": gin.H{
-					"error": "Invalid token",
+					"error": "invalid room id",
 				},
 			})
 			c.Abort()
 			return
 		}
 
-		room.ID = roomId.ID
-		if room.GetRoomPrivilege(id) {
+		token, _ := utils.ExtractTokenHeader(c)
+		uid, err := utils.GetTokenSubject(token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"data": gin.H{
+					"error": "invalid bearer token",
+				},
+			})
+			c.Abort()
+			return
+		}
+
+		room.ID = param.RoomID
+		if room.GetRoomPrivilege(uid) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"data": gin.H{
-					"error": "User is not member of the room",
+					"error": "user is not member of the room",
 				},
 			})
 			c.Abort()
@@ -61,5 +65,4 @@ func RoomPrivilege() gin.HandlerFunc {
 
 		c.Next()
 	}
-
 }
