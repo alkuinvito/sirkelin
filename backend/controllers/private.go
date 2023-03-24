@@ -9,11 +9,12 @@ import (
 )
 
 func GetPrivateList(c *gin.Context) {
-	uid, err := utils.GetTokenSubject(c)
+	token, _ := utils.ExtractTokenHeader(c)
+	uid, err := utils.GetTokenSubject(token)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
-				"error": err.Error(),
+				"error": "invalid bearer token",
 			},
 		})
 		return
@@ -29,27 +30,37 @@ func GetPrivateList(c *gin.Context) {
 }
 
 func CreatePrivateRoom(c *gin.Context) {
-	var privateRoom models.Room
+	var req models.CreateRoomParams
+	var err error
 
-	c.Bind(&privateRoom)
-	privateRoom.IsPrivate = true
-
-	uid, err := utils.GetTokenSubject(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"data": gin.H{
-				"error": "Invalid token",
-			},
-		})
-	}
-
-	privateRoom.Users = append(privateRoom.Users, &models.User{ID: uid})
-
-	id, err := models.InsertRoom(&privateRoom)
+	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"data": gin.H{
-				"error": "Failed to create new room",
+				"error": "invalid create room request body",
+			},
+		})
+	}
+	req.IsPrivate = true
+
+	token, _ := utils.ExtractTokenHeader(c)
+	uid, err := utils.GetTokenSubject(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"data": gin.H{
+				"error": "invalid bearer token",
+			},
+		})
+		return
+	}
+
+	req.Users = append(req.Users, &models.User{ID: uid})
+
+	id, err := models.InsertRoom(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": "failed to create new room",
 			},
 		})
 		return
