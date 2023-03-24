@@ -15,6 +15,14 @@ import (
 var TokenType string = "Bearer"
 var ExpiresIn int = 600
 
+type JWT struct {
+	TokenType        string `json:"token_type"`
+	ExpiresIn        int    `json:"expires_in"`
+	AccessToken      string `json:"access_token"`
+	RefreshExpiresIn int    `json:"refresh_expires_in,omitempty"`
+	RefreshToken     string `json:"refresh_token,omitempty"`
+}
+
 type Identities struct {
 	UserID   string `json:"user_id"`
 	Fullname string `json:"fullname"`
@@ -76,15 +84,8 @@ func DecodeToken(tokenString string) (*AccessToken, error) {
 		b64.StdEncoding.Encode(decoded, []byte(os.Getenv("SECRET_KEY")))
 		return decoded, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*AccessToken); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, err
+	claims, _ := token.Claims.(*AccessToken)
+	return claims, err
 }
 
 func ExtractTokenHeader(c *gin.Context) (string, error) {
@@ -96,6 +97,10 @@ func ExtractTokenHeader(c *gin.Context) (string, error) {
 	}
 
 	return tokenString[1], nil
+}
+
+func ExtractTokenCookie(c *gin.Context) (string, error) {
+	return c.Cookie("refresh_token")
 }
 
 func GetTokenSubject(token string) (string, error) {

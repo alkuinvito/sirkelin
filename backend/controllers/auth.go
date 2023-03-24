@@ -13,19 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthRequest struct {
+type GetJWTParams struct {
 	ClientID string `json:"client_id"`
 	IDToken  string `json:"id_token"`
 }
 
-type AuthResponse struct {
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-}
-
-type RefreshRequest struct {
+type RefreshJWTParams struct {
 	ClientID     string `json:"client_id"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
@@ -62,7 +55,7 @@ func verifyIDToken(c *gin.Context, IDToken string) (*auth.Token, error) {
 
 func SignIn(c *gin.Context) {
 	var err error
-	var req AuthRequest
+	var req GetJWTParams
 
 	err = c.Bind(&req)
 	if err != nil {
@@ -122,7 +115,7 @@ func SignIn(c *gin.Context) {
 	refreshToken, _ := utils.CreateRefreshToken(token.Subject)
 	utils.SetRefreshMethod(c, client, refreshToken)
 	c.JSON(http.StatusOK, gin.H{
-		"data": AuthResponse{
+		"data": utils.JWT{
 			TokenType:   utils.TokenType,
 			ExpiresIn:   utils.ExpiresIn,
 			AccessToken: accessToken,
@@ -132,7 +125,7 @@ func SignIn(c *gin.Context) {
 
 func RefreshTokens(c *gin.Context) {
 	var err error
-	var req RefreshRequest
+	var req RefreshJWTParams
 
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
@@ -190,7 +183,7 @@ func RefreshTokens(c *gin.Context) {
 	token, _ := utils.DecodeToken(req.AccessToken)
 	newToken, _ := utils.CreateToken(token.Subject, token.Identities.Fullname, token.Identities.Email)
 	c.JSON(http.StatusOK, gin.H{
-		"data": AuthResponse{
+		"data": utils.JWT{
 			TokenType:   utils.TokenType,
 			AccessToken: newToken,
 			ExpiresIn:   utils.ExpiresIn,
