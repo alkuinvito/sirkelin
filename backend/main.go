@@ -16,13 +16,14 @@ import (
 func init() {
 	initializers.LoadEnvVar()
 	initializers.ConnectToDB()
+	initializers.InitRedis()
 }
 
 func main() {
 	routesHandler := router.Handle()
 
 	srv := &http.Server{
-		Addr:    os.Getenv("PORT"),
+		Addr:    os.Getenv("APP_PORT"),
 		Handler: routesHandler,
 	}
 
