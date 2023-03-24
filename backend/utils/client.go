@@ -23,6 +23,15 @@ func VerifyClientID(id string) (string, error) {
 	return "", errors.New("unknown client type")
 }
 
+func GetClientRefreshToken(c *gin.Context, clientType string) (string, error) {
+	switch clientType {
+	case NextJS:
+		return ExtractTokenCookie(c)
+	default:
+		return "", errors.New("unknown client type")
+	}
+}
+
 func SetRefreshMethod(c *gin.Context, clientType, refreshToken string) {
 	switch clientType {
 	case NextJS:
