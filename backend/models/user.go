@@ -1,6 +1,7 @@
 package models
 
 import (
+	"firebase.google.com/go/auth"
 	"time"
 
 	"github.com/alkuinvito/sirkelin/initializers"
@@ -17,6 +18,21 @@ type User struct {
 	CreatedAt time.Time
 }
 
-func (user *User) UserAuthenticate() {
+func AuthenticateByIDToken(token *auth.Token) {
+	user := &User{
+		ID:       token.Subject,
+		Fullname: token.Claims["name"].(string),
+		Picture:  token.Claims["picture"].(string),
+		Email:    token.Claims["email"].(string),
+	}
 	initializers.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user)
+}
+
+func GetUserByID(uid string) (*User, error) {
+	var result User
+	err := initializers.DB.Where("id = ?", uid).First(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
