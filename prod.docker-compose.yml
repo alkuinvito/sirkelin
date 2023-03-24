@@ -10,6 +10,13 @@ services:
       - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    env_file: .env
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
   backend:
     restart: unless-stopped
     image: backend
@@ -26,7 +33,7 @@ services:
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     depends_on: 
       - reverse-proxy
-    command: reflex -r "\.go$$" -s -- sh -c "go run ./"
+    entrypoint: app
   frontend:
     restart: unless-stopped
     image: frontend
