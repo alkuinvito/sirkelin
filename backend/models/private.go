@@ -4,7 +4,7 @@ import "github.com/alkuinvito/sirkelin/initializers"
 
 type PrivateResult struct {
 	RoomId   uint
-	UserId   uint
+	UserId   string
 	Username string
 	Picture  string
 }
