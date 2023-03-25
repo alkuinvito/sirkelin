@@ -7,14 +7,17 @@ import {
   signOut
 } from 'firebase/auth'
 import { auth } from '@/firebase/clientApp'
-import { Axios } from 'axios'
 import { useRouter } from 'next/router'
 
 const AuthContext = createContext()
 
-const createSession = async (url, idToken, csrfToken) => {
-  const {data} = await Axios.post(url, {idToken, csrfToken})
-  return data
+const createSession = async (idToken) => {
+  const axios = require('axios')
+  const clientId = Buffer.from(process.env.NEXT_PUBLIC_CLIENT_ID).toString('base64')
+  return axios.post(process.env.NEXT_PUBLIC_APP_HOST + '/api/auth/sign-in', {
+    client_id: clientId,
+    id_token: idToken
+  })
 }
 
 export const AuthContextProvider = ({ children }) => {
@@ -25,27 +28,28 @@ export const AuthContextProvider = ({ children }) => {
     const provider = new GoogleAuthProvider()
     setPersistence(auth, inMemoryPersistence)
     signInWithPopup(auth, provider)
-      .then(userCredential => {
-        return userCredential.user.getIdToken().then(idToken => {
-          setUser({
-            displayName: userCredential.user.displayName,
-            photoURL: userCredential.user.photoURL
-          })
-          console.log(idToken)
-          router.push('/messages')
-          // const csrfToken = getCookie('csrfToken')
-          // return createSession('/api/user/sessionLogin/', idToken, csrfToken)
+      .then(result => {
+        return result.user.getIdToken().then(idToken => {
+          createSession(idToken)
+          .then(() => {
+            setUser({
+              displayName: result.user.displayName,
+              photoURL: result.user.photoURL
+            })
+            router.push('/messages')
+          }
+          ).catch(error => console.error(error))
         })
       })
-      .catch(error => {
-        const errorCode = error.code
-        const errorMessage = error.message
-        console.error(errorCode, errorMessage)
-      })
+      .catch(error => console.error(error.code, error.message))
   }
 
   const firebaseSignOut = () => {
     signOut(auth)
+    .then(() => {
+      console.log("signed out")
+      router.push(process.env.NEXT_PUBLIC_APP_HOST)
+    })
   }
 
   return (
