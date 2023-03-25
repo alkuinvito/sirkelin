@@ -93,7 +93,15 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	models.AuthenticateByIDToken(token)
+	err = models.AuthenticateByIDToken(token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
 
 	switch client {
 	case utils.NextJS:
