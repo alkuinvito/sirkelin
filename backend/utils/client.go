@@ -3,13 +3,21 @@ package utils
 import (
 	b64 "encoding/base64"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"os"
+	"strings"
+
+	"firebase.google.com/go/auth"
+	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/gin-gonic/gin"
 )
 
 const (
 	NextJS string = "CLIENT_ID_NEXT"
 )
+
+func NewFirebaseClient(c *gin.Context) (*auth.Client, error) {
+	return initializers.InitializeAppDefault().Auth(c)
+}
 
 func VerifyClientID(id string) (string, error) {
 	decoded, err := b64.StdEncoding.DecodeString(id)
@@ -23,20 +31,26 @@ func VerifyClientID(id string) (string, error) {
 	return "", errors.New("unknown client type")
 }
 
-func GetClientRefreshToken(c *gin.Context, clientType string) (string, error) {
-	switch clientType {
-	case NextJS:
-		return ExtractTokenCookie(c)
-	default:
-		return "", errors.New("unknown client type")
+func GetSessionFromContext(c *gin.Context) (string, error) {
+	bearerToken := c.GetHeader("Authorization")
+	token := strings.Split(bearerToken, " ")
+
+	if len(token) != 2 {
+		cookies, err := c.Cookie("session")
+		if err != nil {
+			return "", errors.New("no session provided")
+		}
+		return cookies, nil
 	}
+
+	return token[1], nil
 }
 
-func SetRefreshMethod(c *gin.Context, clientType, refreshToken string) {
-	switch clientType {
-	case NextJS:
-		c.SetCookie("refresh_token", refreshToken, 3600, "/", os.Getenv("APP_HOST"), false, false)
-	default:
-		return
+func GetIDFromSession(client *auth.Client, c *gin.Context, session string) (string, error) {
+	token, err := client.VerifySessionCookieAndCheckRevoked(c, session)
+	if err != nil {
+		return "", err
 	}
+
+	return token.UID, nil
 }

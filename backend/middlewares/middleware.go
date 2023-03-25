@@ -10,7 +10,10 @@ import (
 
 func RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := utils.ValidateToken(c); err != nil {
+		client, _ := utils.NewFirebaseClient(c)
+		session, _ := utils.GetSessionFromContext(c)
+		_, err := utils.GetIDFromSession(client, c, session)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
 					"error": "invalid bearer token",
@@ -40,8 +43,9 @@ func RoomPrivilege() gin.HandlerFunc {
 			return
 		}
 
-		token, _ := utils.ExtractTokenHeader(c)
-		uid, err := utils.GetTokenSubject(token)
+		client, _ := utils.NewFirebaseClient(c)
+		session, _ := utils.GetSessionFromContext(c)
+		uid, err := utils.GetIDFromSession(client, c, session)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{

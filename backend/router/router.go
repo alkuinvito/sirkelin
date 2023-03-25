@@ -1,10 +1,11 @@
 package router
 
 import (
+	"os"
+
 	"github.com/alkuinvito/sirkelin/controllers"
 	"github.com/alkuinvito/sirkelin/middlewares"
 	"github.com/gin-gonic/gin"
-	"os"
 )
 
 func Handle() *gin.Engine {
@@ -14,7 +15,6 @@ func Handle() *gin.Engine {
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/sign-in", controllers.SignIn)
-		authGroup.GET("/refresh", controllers.RefreshTokens)
 	}
 
 	privateGroup := router.Group("/private")
