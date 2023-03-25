@@ -2,7 +2,6 @@ import { useContext, createContext, useState } from 'react'
 import {
   setPersistence,
   inMemoryPersistence,
-  GoogleAuthProvider,
   signInWithPopup,
   signOut
 } from 'firebase/auth'
@@ -24,8 +23,7 @@ export const AuthContextProvider = ({ children }) => {
   const [ user, setUser ] = useState({})
   const router = useRouter()
 
-  const firebaseSignIn = () => {
-    const provider = new GoogleAuthProvider()
+  const firebaseSignIn = (provider) => {
     setPersistence(auth, inMemoryPersistence)
     signInWithPopup(auth, provider)
       .then(result => {
