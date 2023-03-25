@@ -25,11 +25,11 @@ export default function Messages() {
 
   useEffect(() => {
     fetchRooms()
-      .then(data => {
-        if (data.data.rooms === null) {
+      .then(response => {
+        if (response.data.data.rooms === null) {
           setRooms(<span>Nothing to see here</span>)
         } else {
-          setRooms(mapRooms(data.data.rooms))
+          setRooms(mapRooms(response.data.data.rooms))
         }
       })
       .catch(error => {
