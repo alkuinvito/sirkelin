@@ -3,29 +3,25 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/alkuinvito/malakh-api/models"
-	"github.com/alkuinvito/malakh-api/utils"
+	"github.com/alkuinvito/sirkelin/models"
+	"github.com/alkuinvito/sirkelin/utils"
 	"github.com/gin-gonic/gin"
 )
 
-func PrivateHandler(rg *gin.RouterGroup) {
-	rg.GET("/", getPrivateList)
-
-	rg.POST("/create", createPrivateRoom)
-}
-
-func getPrivateList(c *gin.Context) {
-	id, err := utils.ExtractTokenUser(c)
+func GetPrivateList(c *gin.Context) {
+	client, _ := utils.NewFirebaseClient(c)
+	session, _ := utils.GetSessionFromContext(c)
+	uid, err := utils.GetIDFromSession(client, c, session)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
-				"error": "Failed to retrieve room list",
+				"error": "invalid bearer token",
 			},
 		})
 		return
 	}
 
-	roomList := models.PrivateList(id)
+	roomList := models.PrivateList(uid)
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
@@ -34,30 +30,39 @@ func getPrivateList(c *gin.Context) {
 	})
 }
 
-func createPrivateRoom(c *gin.Context) {
-	var privateRoom models.Room
+func CreatePrivateRoom(c *gin.Context) {
+	var req models.CreateRoomParams
+	var err error
 
-	c.Bind(&privateRoom)
-
-	privateRoom.IsPrivate = true
-
-	uid, err := utils.ExtractTokenUser(c)
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"data": gin.H{
-				"error": "Invalid token",
-			},
-		})
-	}
-
-	privateRoom.Users = append(privateRoom.Users, &models.User{ID: uid})
-
-	id, err := models.InsertRoom(&privateRoom)
+	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"data": gin.H{
-				"error": "Failed to create new room",
+				"error": "invalid create room request body",
+			},
+		})
+	}
+	req.IsPrivate = true
+
+	client, _ := utils.NewFirebaseClient(c)
+	session, _ := utils.GetSessionFromContext(c)
+	uid, err := utils.GetIDFromSession(client, c, session)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"data": gin.H{
+				"error": "invalid bearer token",
+			},
+		})
+		return
+	}
+
+	req.Users = append(req.Users, &models.User{ID: uid})
+
+	id, err := models.InsertRoom(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": "failed to create new room",
 			},
 		})
 		return

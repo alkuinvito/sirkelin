@@ -3,17 +3,20 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/alkuinvito/malakh-api/models"
-	"github.com/alkuinvito/malakh-api/utils"
+	"github.com/alkuinvito/sirkelin/models"
+	"github.com/alkuinvito/sirkelin/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := utils.ValidateToken(c); err != nil {
+		client, _ := utils.NewFirebaseClient(c)
+		session, _ := utils.GetSessionFromContext(c)
+		_, err := utils.GetIDFromSession(client, c, session)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
-					"error": "Invalid token",
+					"error": "invalid bearer token",
 				},
 			})
 			c.Abort()
@@ -23,38 +26,41 @@ func RoomAccess() gin.HandlerFunc {
 	}
 }
 
-func RoomPrivillege() gin.HandlerFunc {
+func RoomPrivilege() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var roomId models.RoomId
+		var param models.RoomIDParams
 		var room models.Room
 		var err error
-		var id uint
 
-		if err = c.ShouldBindUri(&roomId); err != nil {
+		err = c.ShouldBindUri(&param)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"data": gin.H{
-					"error": "Invalid room id",
-				},
-			})
-			return
-		}
-
-		id, err = utils.ExtractTokenUser(c)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"data": gin.H{
-					"error": "Invalid token",
+					"error": "invalid room id",
 				},
 			})
 			c.Abort()
 			return
 		}
 
-		room.ID = roomId.ID
-		if room.GetRoomPrivillege(id) {
+		client, _ := utils.NewFirebaseClient(c)
+		session, _ := utils.GetSessionFromContext(c)
+		uid, err := utils.GetIDFromSession(client, c, session)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"data": gin.H{
+					"error": "invalid bearer token",
+				},
+			})
+			c.Abort()
+			return
+		}
+
+		room.ID = param.RoomID
+		if room.GetRoomPrivilege(uid) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"data": gin.H{
-					"error": "User is not member of the room",
+					"error": "user is not member of the room",
 				},
 			})
 			c.Abort()
@@ -63,5 +69,4 @@ func RoomPrivillege() gin.HandlerFunc {
 
 		c.Next()
 	}
-
 }

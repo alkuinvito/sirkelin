@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/alkuinvito/sirkelin/router"
 	"log"
 	"net/http"
 	"os"
@@ -9,34 +10,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alkuinvito/malakh-api/controllers"
-	"github.com/alkuinvito/malakh-api/initializers"
-	"github.com/alkuinvito/malakh-api/middlewares"
-	"github.com/gin-gonic/gin"
+	"github.com/alkuinvito/sirkelin/initializers"
 )
 
 func init() {
 	initializers.LoadEnvVar()
 	initializers.ConnectToDB()
+	initializers.InitRedis()
 }
 
 func main() {
-	router := gin.Default()
-
-	firebaseGroup := router.Group("/firebase")
-	controllers.FirebaseHandler(firebaseGroup)
-
-	privateGroup := router.Group("/private")
-	privateGroup.Use(middlewares.RoomAccess())
-	controllers.PrivateHandler(privateGroup)
-
-	roomGroup := router.Group("/room")
-	roomGroup.Use(middlewares.RoomAccess())
-	controllers.RoomHandler(roomGroup)
+	routesHandler := router.Handle()
 
 	srv := &http.Server{
-		Addr:    os.Getenv("PORT"),
-		Handler: router,
+		Addr:    os.Getenv("APP_PORT"),
+		Handler: routesHandler,
 	}
 
 	go func() {

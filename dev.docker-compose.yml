@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  reverse-proxy:
+  traefik:
     image: traefik:v2.9
     command:
       - "--providers.docker=true"
@@ -9,6 +9,20 @@ services:
       - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    env_file: .env
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - cache:/data
   backend:
     image: backend
     build:
@@ -18,14 +32,16 @@ services:
       - "8080:8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`sirkel.in`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     volumes:
       - ./backend:/go/src/github.com/alkuinvito/backend
     depends_on:
-      - reverse-proxy
-    command: CompileDaemon -command="./malakh-api"
+      - traefik
+      - redis
+      - postgres
+    command: CompileDaemon -command="./sirkelin"
   frontend:
     image: frontend
     build:
@@ -35,20 +51,12 @@ services:
       - "3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`sirkel.in`)"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_HOST}`)"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
     depends_on:
-      - reverse-proxy
-  redis:
-    image: redis:7.0-alpine
-    restart: always
-    ports:
-      - '6379:6379'
-    command: redis-server --save 20 1 --loglevel warning --requirepass test-redis
-    volumes: 
-      - cache:/data
+      - traefik
 volumes:
   cache:
     driver: local

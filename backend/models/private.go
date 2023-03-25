@@ -1,10 +1,10 @@
 package models
 
-import "github.com/alkuinvito/malakh-api/initializers"
+import "github.com/alkuinvito/sirkelin/initializers"
 
 type PrivateResult struct {
 	RoomId   uint
-	UserId   uint
+	UserId   string
 	Username string
 	Picture  string
 }

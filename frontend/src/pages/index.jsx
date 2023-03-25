@@ -16,7 +16,7 @@ export default function Home() {
       <main>
         <div className='grid h-screen place-items-center' >
             <div className='bg-slate-900 rounded-xl shadow-2xl flex wh-l '>
-                <Image src={puplepattern} className='wh-i rounded-xl' />
+                <Image src={puplepattern} className='wh-i rounded-xl' priority={true} alt='hero image' />
                 <Auth />
           </div>
         </div>

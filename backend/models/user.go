@@ -3,13 +3,15 @@ package models
 import (
 	"time"
 
-	"github.com/alkuinvito/malakh-api/initializers"
+	"firebase.google.com/go/auth"
 	"gorm.io/gorm/clause"
+
+	"github.com/alkuinvito/sirkelin/initializers"
 )
 
 type User struct {
 	ID        string
-	Username  string `gorm:"uniqueIndex;not null"`
+	Username  string
 	Fullname  string
 	Picture   string
 	Email     string  `gorm:"uniqueIndex;not null"`
@@ -17,6 +19,21 @@ type User struct {
 	CreatedAt time.Time
 }
 
-func (user *User) UserAuthenticate() {
-	initializers.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user)
+func AuthenticateByIDToken(token *auth.Token) error {
+	user := &User{
+		ID:       token.Subject,
+		Fullname: token.Claims["name"].(string),
+		Picture:  token.Claims["picture"].(string),
+		Email:    token.Claims["email"].(string),
+	}
+	return initializers.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
+}
+
+func GetUserByID(uid string) (*User, error) {
+	var result User
+	err := initializers.DB.Where("id = ?", uid).First(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

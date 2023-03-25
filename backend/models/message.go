@@ -1,11 +1,24 @@
 package models
 
-import "time"
+import (
+	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/google/uuid"
+	"time"
+)
 
 type Message struct {
-	ID        uint
+	ID        string
 	Body      string
 	UserID    string
-	RoomID    uint
+	RoomID    string
 	CreatedAt time.Time
+}
+
+type SendMessageParams struct {
+	Body string `json:"body"`
+}
+
+func InsertMessage(message *Message) error {
+	message.ID = uuid.New().String()
+	return initializers.DB.Create(&message).Error
 }
