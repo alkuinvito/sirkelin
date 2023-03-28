@@ -68,7 +68,7 @@ export default function Dashboard() {
                 <h1 className='text-3xl text-center leading-normal translate-y-0.5 grow' style={montserrat.style}>Sirkelin.</h1>
               </header>
               <div className='grow'>
-                <navbar className='px-4 grid text-center gap-10 text-xl'>
+                <nav className='px-4 grid text-center gap-10 text-xl'>
                   <Link href="/messages" legacyBehavior>
                     <button className='flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700 rounded-xl p-3'><FontAwesomeIcon className='self-center group-hover:stroke-white' icon={faComment}/><span style={yantramanav.style} className='ml-4 font-yantramanav'> messages</span></button>
                   </Link>
@@ -77,7 +77,7 @@ export default function Dashboard() {
                   </Link>
                   <button className='flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700  rounded-xl p-3'><FontAwesomeIcon className='self-center group-hover:stroke-white' icon={faUserGroup} /><span style={yantramanav.style} className=' ml-3 font-yantramanav'> friend list</span></button>
                   <button className='flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700  rounded-xl p-3'><FontAwesomeIcon className='self-center group-hover:stroke-white' icon={faHouse} /><span style={yantramanav.style} className=' ml-3 font-yantramanav'> explore</span></button>
-                </navbar>
+                </nav>
               </div>
               <div className='m-4 p-2 rounded-lg'>
                 <div className='flex items-center gap-4'>
