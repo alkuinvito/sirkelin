@@ -12,11 +12,11 @@ func GetUsers(c *gin.Context) {
 	var res []models.User
 	var err error
 
-	err = c.ShouldBindJSON(&req)
+	err = c.ShouldBind(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"data": gin.H{
-				"error": "invalid request body",
+				"error": "query must between 3 and 16 characters",
 			},
 		})
 		return

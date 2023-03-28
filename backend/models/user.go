@@ -21,7 +21,7 @@ type User struct {
 }
 
 type GetUsersParam struct {
-	Fullname string `json:"fullname"`
+	Fullname string `form:"q" binding:"required,min=3,max=16"`
 }
 
 func AuthenticateByIDToken(token *auth.Token) error {
