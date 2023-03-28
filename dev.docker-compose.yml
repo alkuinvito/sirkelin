@@ -16,20 +16,13 @@ services:
     env_file: .env
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
-  redis:
-    image: redis:7.0-alpine
-    ports:
-      - '6379:6379'
-    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - cache:/data
   backend:
     image: backend
     build:
       context: ./backend
       dockerfile: ./dev.Dockerfile
-    ports:
-      - "8080:8080"
+    expose:
+      - 8080
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)"
@@ -39,7 +32,6 @@ services:
       - ./backend:/go/src/github.com/alkuinvito/backend
     depends_on:
       - traefik
-      - redis
       - postgres
     command: CompileDaemon -command="./sirkelin"
   frontend:
@@ -48,7 +40,7 @@ services:
       context: ./frontend
       dockerfile: ./dev.Dockerfile
     expose:
-      - "3000"
+      - 3000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${APP_HOST}`)"
@@ -57,6 +49,3 @@ services:
       - ./frontend/public:/app/public
     depends_on:
       - traefik
-volumes:
-  cache:
-    driver: local
