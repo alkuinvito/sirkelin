@@ -15,7 +15,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Messages from "./messages";
 import Circle from "./circle";
-import UserIcon from "src/asset/follower.png";
 
 const yantramanav = Yantramanav({
   weight: "400",
@@ -36,15 +35,18 @@ export default function Dashboard() {
   const router = useRouter();
   const { page } = router.query;
   const [view, setView] = useState(null);
+  const [selector, setSelector] = useState(1);
   const { firebaseSignOut, user } = UserAuth();
 
   useEffect(() => {
     switch (page) {
       case "messages":
         setView(<Messages />);
+        setSelector(1);
         break;
       case "circle":
         setView(<Circle />);
+        setSelector(2);
         break;
       default:
         <ErrorPage statusCode={404} />; //TODO: ganti ke error page
@@ -73,9 +75,9 @@ export default function Dashboard() {
                 </h1>
               </header>
               <div className="grow">
-                <nav className="px-4 grid text-center gap-10 text-xl">
+                <nav className="px-4 grid text-center gap-8 text-xl">
                   <Link href="/messages" legacyBehavior>
-                    <button className="flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700 rounded-xl p-3">
+                    <button className={"flex group hover:bg-gray-700/40 rounded-xl py-3 px-4 " + (selector === 1 ? "bg-gray-700/40" : "")}>
                       <FontAwesomeIcon
                         className="self-center group-hover:stroke-white"
                         icon={faComment}
@@ -84,13 +86,12 @@ export default function Dashboard() {
                         style={yantramanav.style}
                         className="ml-4 font-yantramanav"
                       >
-                        {" "}
                         messages
                       </span>
                     </button>
                   </Link>
                   <Link href="/circle" legacyBehavior>
-                    <button className="flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700 rounded-xl p-3">
+                    <button className={"flex group hover:bg-gray-700/40 rounded-xl py-3 px-4 " + (selector === 2 ? "bg-gray-700/40" : "")}>
                       <FontAwesomeIcon
                         className="self-center group-hover:stroke-white"
                         icon={faInfinity}
@@ -99,12 +100,11 @@ export default function Dashboard() {
                         style={yantramanav.style}
                         className=" ml-3 font-yantramanav"
                       >
-                        {" "}
                         circle
                       </span>
                     </button>
                   </Link>
-                  <button className="flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700  rounded-xl p-3">
+                  <button className={"flex group hover:bg-gray-700/40 rounded-xl py-3 px-4 " + (selector === 3 ? "bg-gray-700/40" : "")}>
                     <FontAwesomeIcon
                       className="self-center group-hover:stroke-white"
                       icon={faUserGroup}
@@ -113,11 +113,10 @@ export default function Dashboard() {
                       style={yantramanav.style}
                       className=" ml-3 font-yantramanav"
                     >
-                      {" "}
                       friend list
                     </span>
                   </button>
-                  <button className="flex group gap-4 hover:bg-gradient-to-r from-violet-900 to-indigo-700  rounded-xl p-3">
+                  <button className={"flex group hover:bg-gray-700/40 rounded-xl py-3 px-4 " + (selector === 4 ? "bg-gray-700/40" : "")}>
                     <FontAwesomeIcon
                       className="self-center group-hover:stroke-white"
                       icon={faHouse}
@@ -126,7 +125,6 @@ export default function Dashboard() {
                       style={yantramanav.style}
                       className=" ml-3 font-yantramanav"
                     >
-                      {" "}
                       explore
                     </span>
                   </button>
