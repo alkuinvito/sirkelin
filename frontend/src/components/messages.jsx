@@ -5,12 +5,18 @@ import { Montserrat } from "@next/font/google";
 import Image from "next/image";
 import GetUserModal from "./getUserModal";
 import Loading from "@/components/loading";
-import UserIcon from "src/asset/follower.png";
 
 const montserrat = Montserrat({
   weight: "400",
   subsets: ["latin"],
 });
+
+const fetchUsers = async () => {
+  const axios = require("axios");
+  return axios.get(process.env.NEXT_PUBLIC_APP_HOST + "/api/user/list", {
+    withCredentials: true,
+  });
+};
 
 const fetchRooms = async () => {
   const axios = require("axios");
@@ -22,11 +28,16 @@ const fetchRooms = async () => {
 const mapRooms = (rooms) => {
   return rooms.map((room) => (
     <li
-      className="h-20 px-4 flex items-center rounded-lg gap-2 cursor-pointer hover:bg-[#404040]/30"
-      key={room.RoomId}
+      className="h-16 px-4 flex gap-4 items-center rounded-lg cursor-pointer hover:bg-gray-700/30"
+      key={room.RoomID}
     >
-      <Image src={UserIcon} className="w-10 h-10 " />
-      {room.Username}
+      <Image
+        className="rounded-full"
+        src={room.Picture}
+        width={32}
+        height={32}
+      />
+      <span style={montserrat}>{room.Fullname}</span>
     </li>
   ));
 };
@@ -34,6 +45,7 @@ const mapRooms = (rooms) => {
 export default function Messages() {
   const [rooms, setRooms] = useState(<Loading />);
   const [getUsers, setGetUsers] = useState(false);
+  const [result, setResult] = useState([]);
 
   useEffect(() => {
     fetchRooms()
@@ -47,18 +59,27 @@ export default function Messages() {
       .catch((error) => {
         console.error(error);
       });
+    fetchUsers()
+      .then((response) => {
+        if (response.data.data.users === null) {
+          setResult([]);
+        } else {
+          setResult(response.data.data.users);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   return (
     <main>
-      {getUsers ? <GetUserModal /> : null}
+      {getUsers ? <GetUserModal setGetUsers={setGetUsers} result={result} /> : null}
       <header>
         <h1 className="text-2xl text-center">Messages</h1>
       </header>
-      <div className="w-96 px-4" style={montserrat.style}>
-        <div className="">
+      <div className="w-80 px-4" style={montserrat.style}>
+        <div>
           <section className="flex gap-3">
-            <div className="flex items-center gap-3 py-2 px-4 rounded-full backdrop-blur-sm bg-[#323232]/30 hover:bg-[#404040]/30 focus-within:bg-[#404040]/30">
+            <div className="flex items-center gap-3 grow py-2 px-4 rounded-full backdrop-blur-sm bg-gray-700/40 hover:bg-gray-700/30 focus-within:bg-gray-700/30">
               <FontAwesomeIcon
                 className="text-base text-gray-700"
                 icon={faSearch}
@@ -71,8 +92,8 @@ export default function Messages() {
               />
             </div>
             <button
-              className="w-12 p-2 rounded-full text-indigo-700 border border-indigo-700 hover:bg-indigo-700 hover:text-gray-200"
-              onClick={() => setGetUsers(true)}
+              className="text-gray-700 hover:text-indigo-700"
+              onClick={() => setGetUsers(!getUsers)}
             >
               <FontAwesomeIcon className="" icon={faPen}></FontAwesomeIcon>
             </button>
