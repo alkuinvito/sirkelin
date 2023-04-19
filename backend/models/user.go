@@ -34,7 +34,16 @@ func AuthenticateByIDToken(token *auth.Token) error {
 	return initializers.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
 }
 
-func GetUsers(fullname string) ([]User, error) {
+func GetUsers(uid string) ([]User, error) {
+	var result []User
+	err := initializers.DB.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func GetUsersByName(fullname string) ([]User, error) {
 	var result []User
 	err := initializers.DB.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(fullname)+"%").Limit(5).Find(&result).Error
 	if err != nil {

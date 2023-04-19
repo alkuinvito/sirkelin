@@ -4,25 +4,19 @@ import (
 	"net/http"
 
 	"github.com/alkuinvito/sirkelin/models"
+	"github.com/alkuinvito/sirkelin/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func GetUsers(c *gin.Context) {
-	var req models.GetUsersParam
 	var res []models.User
 	var err error
 
-	err = c.ShouldBind(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data": gin.H{
-				"error": "query must between 3 and 16 characters",
-			},
-		})
-		return
-	}
+	client, _ := utils.NewFirebaseClient(c)
+	session, _ := utils.GetSessionFromContext(c)
+	uid, _ := utils.GetIDFromSession(client, c, session)
 
-	res, err = models.GetUsers(req.Fullname)
+	res, err = models.GetUsers(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"data": gin.H{

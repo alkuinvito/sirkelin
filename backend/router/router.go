@@ -40,7 +40,7 @@ func Handle() *gin.Engine {
 	userGroup := router.Group("/user")
 	{
 		userGroup.Use(middlewares.RoomAccess())
-		userGroup.GET("/search", controllers.GetUsers)
+		userGroup.GET("/list", controllers.GetUsers)
 	}
 
 	return router
