@@ -17,17 +17,17 @@ function Auth() {
   };
 
   return (
-    <div>
-      <h1 className="text-gray-400">Please sign in</h1>
+    <div className="p-8">
+      <h1 className="text-gray-200 text-2xl font-normal mb-8">Sign in to <b className="bg-clip-text text-transparent bg-gradient-to-tr from-indigo-700 to-pink-400">Sirkelin</b> using social account</h1>
       <button
-        className="p-2 rounded-md bg-[#4285F4] hover:bg-[#4285F4]/80 transition"
+        className="w-full p-2 mb-4 rounded-md bg-[#4285F4] hover:bg-[#4285F4]/80"
         onClick={() => signInHandler(googleProvider)}
       >
         <FontAwesomeIcon className="mr-2" icon={faGoogle} />
         Sign in with Google
       </button>
       <button
-        className="p-2 rounded-md bg-[#262627] hover:bg-[#262627]/80 transition"
+        className="w-full p-2 rounded-md bg-[#262627] hover:bg-[#262627]/80"
         onClick={() => signInHandler(githubProvider)}
       >
         <FontAwesomeIcon className="mr-2" icon={faGithub} />
