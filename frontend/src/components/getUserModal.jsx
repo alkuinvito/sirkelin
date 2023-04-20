@@ -22,7 +22,7 @@ const createRoom = async (name, picture, uid) => {
   })
 }
 
-export default function GetUserModal({ setGetUsers, result }) {
+export default function GetUserModal({ setGetUsers, result, callback }) {
   const [query, setQuery] = useState("");
 
   const filtered = result.filter((user) => {
@@ -38,8 +38,8 @@ export default function GetUserModal({ setGetUsers, result }) {
   const handleCreateRoom = (name, picture, uid) => {
     createRoom(name, picture, uid)
       .then((response) => {
-        console.log(response);
         setGetUsers(false);
+        callback();
       })
       .catch((error) => {
         console.error(error)

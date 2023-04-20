@@ -55,7 +55,7 @@ export default function Messages() {
     });
   };
 
-  useEffect(() => {
+  const updateRooms = () => {
     fetchRooms()
       .then((response) => {
         if (response.data.data.rooms === null) {
@@ -67,6 +67,10 @@ export default function Messages() {
       .catch((error) => {
         console.error(error);
       });
+  }
+
+  useEffect(() => {
+    updateRooms();
     fetchUsers()
       .then((response) => {
         if (response.data.data.users === null) {
@@ -76,11 +80,17 @@ export default function Messages() {
         }
       })
       .catch(console.error);
+
+    const refreshRoom = setInterval(() => {
+      updateRooms();
+    }, 12000);
+
+    return () => clearInterval(refreshRoom);
   }, []);
 
   return (
     <main className="flex grow">
-      {getUsers ? <GetUserModal setGetUsers={setGetUsers} result={result} /> : null}
+      {getUsers ? <GetUserModal setGetUsers={setGetUsers} result={result} callback={updateRooms} /> : null}
       <section>
         <header>
           <h1 className="text-2xl text-center">Messages</h1>
