@@ -111,8 +111,8 @@ export default function Messages() {
           </div>
         </div>
       </section>
-      <section className="grow">
-        <Room room={room} />
+      <section className="grow border-l border-gray-700/40">
+        {room?.RoomId === undefined ? null : <Room room={room} />}
       </section>
     </main>
   );

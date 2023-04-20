@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useLocalStorage } from "@/context/useLocalStorage";
+import { UserAuth } from "@/context/AuthContext";
 import { Montserrat } from "@next/font/google";
 import { faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,7 +28,7 @@ const mapMessages = (messages, uid) => {
       <li
         style={montserrat.style}
         key={message.ID}
-        className={"py-2 px-3 mb-2 w-fit max-w-sm box-border rounded-xl" + (message.UserID === uid ? " justify-self-end bg-indigo-800/40" : " bg-gray-500/40")}
+        className={"py-2 px-3 mb-2 w-fit max-w-sm text-base box-border rounded-xl" + (message.UserID === uid ? " justify-self-end bg-indigo-800/40" : " bg-gray-500/40")}
       >
         <span>{message.Body}</span>
       </li>
@@ -39,11 +39,10 @@ const mapMessages = (messages, uid) => {
 export default function Room(props) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-  const [user, _] = useLocalStorage("user");
+  const { user } = UserAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(message)
     if (message.length !== 0) {
       setMessage("");
       sendMessage(props.room?.RoomId, message)
@@ -61,7 +60,6 @@ export default function Room(props) {
         .then((response) => {
           const responseMsg = response.data.data.messages;
           if (messages !== responseMsg) {
-            console.log("updating messages");
             setMessages(mapMessages(responseMsg, user.ID));
           }
         })
@@ -73,7 +71,6 @@ export default function Room(props) {
           .then((response) => {
             const responseMsg = response.data.data.messages;
             if (messages !== responseMsg) {
-              console.log("updating messages");
               setMessages(mapMessages(responseMsg, user.ID));
             }
           })
@@ -87,15 +84,16 @@ export default function Room(props) {
   }, [props.room]);
 
   return (
-    <section className="h-screen grow border-l border-gray-700/40" style={montserrat.style}>
+    <section className="h-screen grow" style={montserrat.style}>
       <header className="border-b border-gray-700/40">
         <Image
+          className="rounded-full"
           src={props.room?.Picture}
-          width={40}
-          height={40}
+          width={48}
+          height={48}
         >
         </Image>
-        <h1>{props.room?.Name}</h1>
+        <h1 className="ml-8 text-lg font-semibold">{props.room?.Name}</h1>
       </header>
       <div className="ct-room flex flex-col h-full">
         <div className="p-4 grow">
@@ -106,7 +104,7 @@ export default function Room(props) {
         <form className="flex items-center w-full p-3 border-t border-gray-700/40" onSubmit={(e) => { handleSubmit(e) }}>
           <input
             style={montserrat.style}
-            className="w-full py-2 px-4 bg-gray-700/40 text-md rounded-md hover:bg-gray-700/30 focus-within:bg-gray-700/30 focus:outline-none focus:ring-1 focus:ring-indigo-800"
+            className="w-full py-2 px-4 bg-gray-700/40 text-base rounded-md hover:bg-gray-700/30 focus-within:bg-gray-700/30 focus:outline-none focus:ring-1 focus:ring-indigo-800"
             type="text"
             name="body"
             autoComplete="off"
