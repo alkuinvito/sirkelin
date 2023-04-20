@@ -15,6 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Messages from "./messages";
 import Circle from "./circle";
+import UserIcon from "@/asset/follower.png";
 
 const yantramanav = Yantramanav({
   weight: "400",
@@ -133,14 +134,15 @@ export default function Dashboard() {
               <div className="m-4 p-2 rounded-lg">
                 <div className="flex items-center gap-4">
                   <Image
+                    alt="user photo"
                     className="rounded-full"
-                    src={user.photoURL}
+                    src={(user?.photoURL || UserIcon)}
                     width={36}
                     height={36}
                   />
                   <span className="w-full">
                     <b className="text-lg" style={yBold.style}>
-                      {user.displayName}
+                      {user?.displayName}
                     </b>
                   </span>
                   <FontAwesomeIcon

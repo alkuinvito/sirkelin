@@ -29,9 +29,10 @@ const mapRooms = (rooms) => {
   return rooms.map((room) => (
     <li
       className="h-16 px-4 flex gap-4 items-center rounded-lg cursor-pointer hover:bg-gray-700/30"
-      key={room.RoomID}
+      key={room.RoomId}
     >
       <Image
+        alt="contact photo"
         className="rounded-full"
         src={room.Picture}
         width={32}
