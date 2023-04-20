@@ -1,4 +1,4 @@
-import { useContext, createContext, useState } from "react";
+import { useContext, createContext } from "react";
 import {
   setPersistence,
   inMemoryPersistence,
@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/firebase/clientApp";
 import { useRouter } from "next/router";
+import { useLocalStorage } from "./useLocalStorage";
 
 const AuthContext = createContext();
 
@@ -21,8 +22,15 @@ const createSession = async (idToken) => {
   });
 };
 
+const endSession = async () => {
+  const axios = require("axios");
+  return axios.post(process.env.NEXT_PUBLIC_APP_HOST + "/api/auth/sign-out", {
+    withCredentials: true,
+  });
+};
+
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useLocalStorage("user");
   const router = useRouter();
 
   const firebaseSignIn = (provider) => {
@@ -46,8 +54,10 @@ export const AuthContextProvider = ({ children }) => {
 
   const firebaseSignOut = () => {
     signOut(auth).then(() => {
-      console.log("signed out");
-      router.push(process.env.NEXT_PUBLIC_APP_HOST);
+      endSession().then(() => {
+        setUser(null);
+        router.push(process.env.NEXT_PUBLIC_APP_HOST);
+      });
     });
   };
 
