@@ -16,7 +16,7 @@ func RoomAccess() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
-					"error": "invalid bearer token",
+					"error": "invalid session token",
 				},
 			})
 			c.Abort()
@@ -49,7 +49,7 @@ func RoomPrivilege() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
-					"error": "invalid bearer token",
+					"error": "invalid session token",
 				},
 			})
 			c.Abort()
