@@ -143,3 +143,40 @@ func SignIn(c *gin.Context) {
 		})
 	}
 }
+
+func SignOut(c *gin.Context) {
+	var err error
+
+	firebase, err := utils.NewFirebaseClient(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": "firebase admin sdk error",
+			},
+		})
+		return
+	}
+
+	session, err := utils.GetSessionFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"data": gin.H{
+				"error": "invalid session token",
+			},
+		})
+		return
+	}
+	uid, _ := utils.GetIDFromSession(firebase, c, session)
+
+	err = firebase.RevokeRefreshTokens(c, uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": gin.H{
+				"error": "firebase admin sdk error",
+			},
+		})
+		return
+	}
+
+	c.SetCookie("session", "", 0, "/", os.Getenv("APP_HOST"), true, true)
+}

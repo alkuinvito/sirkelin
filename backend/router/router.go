@@ -15,6 +15,7 @@ func Handle() *gin.Engine {
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/sign-in", controllers.SignIn)
+		authGroup.POST("/sign-out", controllers.SignOut)
 	}
 
 	privateGroup := router.Group("/private")
