@@ -1,60 +1,74 @@
-import { useContext, createContext, useState } from 'react'
+import { useContext, createContext } from "react";
 import {
   setPersistence,
   inMemoryPersistence,
-  GoogleAuthProvider,
   signInWithPopup,
-  signOut
-} from 'firebase/auth'
-import { auth } from '@/firebase/clientApp'
-import { Axios } from 'axios'
-import { useRouter } from 'next/router'
+  signOut,
+} from "firebase/auth";
+import { auth } from "@/firebase/clientApp";
+import { useRouter } from "next/router";
+import { useLocalStorage } from "./useLocalStorage";
 
-const AuthContext = createContext()
+const AuthContext = createContext();
 
-const createSession = async (url, idToken, csrfToken) => {
-  const {data} = await Axios.post(url, {idToken, csrfToken})
-  return data
-}
+const createSession = async (idToken) => {
+  const axios = require("axios");
+  const clientId = Buffer.from(process.env.NEXT_PUBLIC_CLIENT_ID).toString(
+    "base64"
+  );
+  return axios.post(process.env.NEXT_PUBLIC_APP_HOST + "/api/auth/sign-in", {
+    client_id: clientId,
+    id_token: idToken,
+  });
+};
+
+const endSession = async () => {
+  const axios = require("axios");
+  return axios.post(process.env.NEXT_PUBLIC_APP_HOST + "/api/auth/sign-out", {
+    withCredentials: true,
+  });
+};
 
 export const AuthContextProvider = ({ children }) => {
-  const [ user, setUser ] = useState({})
-  const router = useRouter()
+  const [user, setUser] = useLocalStorage("user");
+  const router = useRouter();
 
-  const firebaseSignIn = () => {
-    const provider = new GoogleAuthProvider()
-    setPersistence(auth, inMemoryPersistence)
+  const firebaseSignIn = (provider) => {
+    setPersistence(auth, inMemoryPersistence);
     signInWithPopup(auth, provider)
-      .then(userCredential => {
-        return userCredential.user.getIdToken().then(idToken => {
-          setUser({
-            displayName: userCredential.user.displayName,
-            photoURL: userCredential.user.photoURL
-          })
-          console.log(idToken)
-          router.push('/messages')
-          // const csrfToken = getCookie('csrfToken')
-          // return createSession('/api/user/sessionLogin/', idToken, csrfToken)
-        })
+      .then((result) => {
+        return result.user.getIdToken().then((idToken) => {
+          createSession(idToken)
+            .then(() => {
+              setUser({
+                ID: result.user.uid,
+                displayName: result.user.displayName,
+                photoURL: result.user.photoURL,
+              });
+              router.push("/messages");
+            })
+            .catch((error) => console.error(error));
+        });
       })
-      .catch(error => {
-        const errorCode = error.code
-        const errorMessage = error.message
-        console.error(errorCode, errorMessage)
-      })
-  }
+      .catch((error) => console.error(error.code, error.message));
+  };
 
   const firebaseSignOut = () => {
-    signOut(auth)
-  }
+    signOut(auth).then(() => {
+      endSession().then(() => {
+        setUser(null);
+        router.push(process.env.NEXT_PUBLIC_APP_HOST);
+      });
+    });
+  };
 
   return (
     <AuthContext.Provider value={{ firebaseSignIn, firebaseSignOut, user }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
 export const UserAuth = () => {
-  return useContext(AuthContext)
-}
+  return useContext(AuthContext);
+};

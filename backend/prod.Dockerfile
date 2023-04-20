@@ -1,7 +1,6 @@
 FROM golang:1.19-alpine AS builder
 WORKDIR /go/src/github.com/alkuinvito/backend/
 ENV APP_MODE=release
-RUN go install github.com/cespare/reflex@latest
 COPY go.mod go.sum .env main.go ./
 RUN go mod download
 COPY . .

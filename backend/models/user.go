@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	"firebase.google.com/go/auth"
@@ -19,6 +20,10 @@ type User struct {
 	CreatedAt time.Time
 }
 
+type GetUsersParam struct {
+	Fullname string `form:"q" binding:"required,min=3,max=16"`
+}
+
 func AuthenticateByIDToken(token *auth.Token) error {
 	user := &User{
 		ID:       token.Subject,
@@ -27,6 +32,24 @@ func AuthenticateByIDToken(token *auth.Token) error {
 		Email:    token.Claims["email"].(string),
 	}
 	return initializers.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
+}
+
+func GetUsers(uid string) ([]User, error) {
+	var result []User
+	err := initializers.DB.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func GetUsersByName(fullname string) ([]User, error) {
+	var result []User
+	err := initializers.DB.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(fullname)+"%").Limit(5).Find(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func GetUserByID(uid string) (*User, error) {

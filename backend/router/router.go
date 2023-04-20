@@ -15,6 +15,7 @@ func Handle() *gin.Engine {
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/sign-in", controllers.SignIn)
+		authGroup.POST("/sign-out", controllers.SignOut)
 	}
 
 	privateGroup := router.Group("/private")
@@ -35,6 +36,12 @@ func Handle() *gin.Engine {
 			messageHandler.POST("/", controllers.SendMessage)
 			messageHandler.GET("/", controllers.GetMessages)
 		}
+	}
+
+	userGroup := router.Group("/user")
+	{
+		userGroup.Use(middlewares.RoomAccess())
+		userGroup.GET("/list", controllers.GetUsers)
 	}
 
 	return router

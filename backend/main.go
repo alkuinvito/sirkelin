@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/alkuinvito/sirkelin/router"
 	"log"
 	"net/http"
 	"os"
@@ -11,12 +10,12 @@ import (
 	"time"
 
 	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/alkuinvito/sirkelin/router"
 )
 
 func init() {
 	initializers.LoadEnvVar()
 	initializers.ConnectToDB()
-	initializers.InitRedis()
 }
 
 func main() {

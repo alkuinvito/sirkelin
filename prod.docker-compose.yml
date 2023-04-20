@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  reverse-proxy:
+  traefik:
     restart: always
     image: traefik:v2.9
     command:
@@ -11,6 +11,7 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
   postgres:
+    restart: always
     image: postgres
     ports:
       - "5432:5432"
@@ -18,32 +19,32 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
   backend:
-    restart: unless-stopped
+    restart: always
     image: backend
     build:
       context: ./backend
       target: builder
       dockerfile: ./prod.Dockerfile
     expose:
-      - "8080"
+      - 8080
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`sirkel.in`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
     depends_on: 
-      - reverse-proxy
-    entrypoint: app
+      - traefik
+    command: ./app
   frontend:
-    restart: unless-stopped
+    restart: always
     image: frontend
     build:
       context: ./frontend
       dockerfile: ./prod.Dockerfile
     expose:
-      - "3000"
+      - 3000
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`sirkel.in`)"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_HOST}`)"
     depends_on:
-      - reverse-proxy
+      - traefik
