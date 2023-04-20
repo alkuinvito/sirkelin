@@ -66,7 +66,7 @@ export default function Dashboard() {
       <main>
         <div className="h-screen">
           <div className="wh-chat flex">
-            <div className="h-screen flex flex-col navbar-ct backdrop-blur-sm bg-[#323232]/30">
+            <div className="h-screen w-80 flex flex-col navbar-ct backdrop-blur-sm bg-[#323232]/30">
               <header>
                 <h1
                   className="text-3xl text-center leading-normal translate-y-0.5 grow"

@@ -41,6 +41,7 @@ export const AuthContextProvider = ({ children }) => {
           createSession(idToken)
             .then(() => {
               setUser({
+                ID: result.user.uid,
                 displayName: result.user.displayName,
                 photoURL: result.user.photoURL,
               });

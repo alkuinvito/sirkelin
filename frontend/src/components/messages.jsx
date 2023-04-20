@@ -5,6 +5,7 @@ import { Montserrat } from "@next/font/google";
 import Image from "next/image";
 import GetUserModal from "./getUserModal";
 import Loading from "@/components/loading";
+import Room from "./room";
 
 const montserrat = Montserrat({
   weight: "400",
@@ -13,23 +14,20 @@ const montserrat = Montserrat({
 
 const fetchUsers = async () => {
   const axios = require("axios");
-  return axios.get(process.env.NEXT_PUBLIC_APP_HOST + "/api/user/list", {
-    withCredentials: true,
-  });
+  return axios.get(process.env.NEXT_PUBLIC_APP_HOST + "/api/user/list");
 };
 
 const fetchRooms = async () => {
   const axios = require("axios");
-  return axios.get(process.env.NEXT_PUBLIC_APP_HOST + "/api/private", {
-    withCredentials: true,
-  });
+  return axios.get(process.env.NEXT_PUBLIC_APP_HOST + "/api/private");
 };
 
-const mapRooms = (rooms) => {
+const mapRooms = (rooms, setter) => {
   return rooms.map((room) => (
     <li
       className="h-16 px-4 flex gap-4 items-center rounded-lg cursor-pointer hover:bg-gray-700/30"
       key={room.RoomId}
+      onClick={() => { setter(room.RoomId, room.Fullname, room.Picture) }}
     >
       <Image
         alt="contact photo"
@@ -45,8 +43,17 @@ const mapRooms = (rooms) => {
 
 export default function Messages() {
   const [rooms, setRooms] = useState(<Loading />);
+  const [room, setRoom] = useState({});
   const [getUsers, setGetUsers] = useState(false);
   const [result, setResult] = useState([]);
+
+  const handleChangeRoom = (RoomId, Name, Picture) => {
+    setRoom({
+      RoomId: RoomId,
+      Name: Name,
+      Picture: Picture
+    });
+  };
 
   useEffect(() => {
     fetchRooms()
@@ -54,7 +61,7 @@ export default function Messages() {
         if (response.data.data.rooms === null) {
           setRooms(<span>Nothing to see here</span>);
         } else {
-          setRooms(mapRooms(response.data.data.rooms));
+          setRooms(mapRooms(response.data.data.rooms, handleChangeRoom));
         }
       })
       .catch((error) => {
@@ -72,36 +79,41 @@ export default function Messages() {
   }, []);
 
   return (
-    <main>
+    <main className="flex grow">
       {getUsers ? <GetUserModal setGetUsers={setGetUsers} result={result} /> : null}
-      <header>
-        <h1 className="text-2xl text-center">Messages</h1>
-      </header>
-      <div className="w-80 px-4" style={montserrat.style}>
-        <div>
-          <section className="flex gap-3">
-            <div className="flex items-center gap-3 grow py-2 px-4 rounded-full backdrop-blur-sm bg-gray-700/40 hover:bg-gray-700/30 focus-within:bg-gray-700/30">
-              <FontAwesomeIcon
-                className="text-base text-gray-700"
-                icon={faSearch}
-              ></FontAwesomeIcon>
-              <input
-                style={montserrat.style}
-                type="text"
-                className="grow h-7 text-sm bg-transparent text-gray-200 focus:outline-none"
-                placeholder="Search..."
-              />
+      <section>
+        <header>
+          <h1 className="text-2xl text-center">Messages</h1>
+        </header>
+        <div className="w-80 px-4" style={montserrat.style}>
+          <div>
+            <div className="flex gap-3">
+              <div className="flex items-center gap-3 grow py-2 px-4 rounded-full backdrop-blur-sm bg-gray-700/40 hover:bg-gray-700/30 focus-within:bg-gray-700/30">
+                <FontAwesomeIcon
+                  className="text-base text-gray-700"
+                  icon={faSearch}
+                ></FontAwesomeIcon>
+                <input
+                  style={montserrat.style}
+                  type="text"
+                  className="grow h-7 text-sm bg-transparent text-gray-200 focus:outline-none"
+                  placeholder="Search..."
+                />
+              </div>
+              <button
+                className="text-gray-700 hover:text-indigo-700"
+                onClick={() => setGetUsers(!getUsers)}
+              >
+                <FontAwesomeIcon className="" icon={faPen}></FontAwesomeIcon>
+              </button>
             </div>
-            <button
-              className="text-gray-700 hover:text-indigo-700"
-              onClick={() => setGetUsers(!getUsers)}
-            >
-              <FontAwesomeIcon className="" icon={faPen}></FontAwesomeIcon>
-            </button>
-          </section>
-          <ul className="my-6">{rooms}</ul>
+            <ul className="my-6">{rooms}</ul>
+          </div>
         </div>
-      </div>
+      </section>
+      <section className="grow">
+        <Room room={room} />
+      </section>
     </main>
   );
 }

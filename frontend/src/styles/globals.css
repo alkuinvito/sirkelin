@@ -59,6 +59,6 @@ header {
   height: 100%;
 }
 
-.navbar-ct {
-  width: 280px;
+.ct-room {
+  height: calc(100% - 108px);
 }
