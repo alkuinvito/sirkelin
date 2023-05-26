@@ -3,19 +3,16 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/alkuinvito/sirkelin/models"
-	"github.com/alkuinvito/sirkelin/utils"
+	authService "github.com/alkuinvito/sirkelin/app/auth/service"
 	"github.com/gin-gonic/gin"
 )
 
 func RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := utils.NewAuth(c).GetSession().GetUserID()
-		if err != nil {
+		auth := authService.Init(c)
+		if auth.Error() != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"data": gin.H{
-					"error": "invalid session token",
-				},
+				"error": "invalid session token",
 			})
 			c.Abort()
 			return
@@ -41,8 +38,8 @@ func RoomPrivilege() gin.HandlerFunc {
 			return
 		}
 
-		uid, err := utils.NewAuth(c).GetSession().GetUserID()
-		if err != nil {
+		auth := authService.Init(c)
+		if auth.Error() != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
 					"error": "invalid session token",
@@ -53,6 +50,7 @@ func RoomPrivilege() gin.HandlerFunc {
 		}
 
 		room.ID = param.RoomID
+		uid := auth.Token().UID
 		if room.GetRoomPrivilege(uid) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"data": gin.H{
