@@ -65,8 +65,9 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	firebase, err := utils.NewFirebaseClient(c)
-	if err != nil {
+	auth := utils.NewAuth(c)
+	firebase := auth.Client()
+	if auth.Error() != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"data": gin.H{
 				"error": "firebase admin sdk error",
@@ -147,8 +148,9 @@ func SignIn(c *gin.Context) {
 func SignOut(c *gin.Context) {
 	var err error
 
-	firebase, err := utils.NewFirebaseClient(c)
-	if err != nil {
+	auth := utils.NewAuth(c)
+	firebase := auth.Client()
+	if auth.Error() != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"data": gin.H{
 				"error": "firebase admin sdk error",
@@ -157,7 +159,7 @@ func SignOut(c *gin.Context) {
 		return
 	}
 
-	session, err := utils.GetSessionFromContext(c)
+	uid, err := auth.GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"data": gin.H{
@@ -166,7 +168,6 @@ func SignOut(c *gin.Context) {
 		})
 		return
 	}
-	uid, _ := utils.GetIDFromSession(firebase, c, session)
 
 	err = firebase.RevokeRefreshTokens(c, uid)
 	if err != nil {

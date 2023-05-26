@@ -21,9 +21,7 @@ func CreateRoom(c *gin.Context) {
 		})
 	}
 
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, err := utils.GetIDFromSession(client, c, session)
+	uid, err := utils.NewAuth(c).GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
@@ -67,9 +65,7 @@ func SendMessage(c *gin.Context) {
 		return
 	}
 
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, err := utils.GetIDFromSession(client, c, session)
+	uid, err := utils.NewAuth(c).GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
@@ -144,9 +140,7 @@ func GetMessages(c *gin.Context) {
 }
 
 func GetRoomList(c *gin.Context) {
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, err := utils.GetIDFromSession(client, c, session)
+	uid, err := utils.NewAuth(c).GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{

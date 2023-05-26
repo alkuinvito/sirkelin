@@ -10,9 +10,7 @@ import (
 
 func RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		client, _ := utils.NewFirebaseClient(c)
-		session, _ := utils.GetSessionFromContext(c)
-		_, err := utils.GetIDFromSession(client, c, session)
+		_, err := utils.NewAuth(c).GetSession().GetUserID()
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
@@ -43,9 +41,7 @@ func RoomPrivilege() gin.HandlerFunc {
 			return
 		}
 
-		client, _ := utils.NewFirebaseClient(c)
-		session, _ := utils.GetSessionFromContext(c)
-		uid, err := utils.GetIDFromSession(client, c, session)
+		uid, err := utils.NewAuth(c).GetSession().GetUserID()
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{

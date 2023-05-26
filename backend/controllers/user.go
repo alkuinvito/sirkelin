@@ -12,10 +12,7 @@ func GetUsers(c *gin.Context) {
 	var res []models.User
 	var err error
 
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, _ := utils.GetIDFromSession(client, c, session)
-
+	uid, _ := utils.NewAuth(c).GetSession().GetUserID()
 	res, err = models.GetUsers(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

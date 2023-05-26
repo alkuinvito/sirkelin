@@ -9,9 +9,7 @@ import (
 )
 
 func GetPrivateList(c *gin.Context) {
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, err := utils.GetIDFromSession(client, c, session)
+	uid, err := utils.NewAuth(c).GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
@@ -44,9 +42,7 @@ func CreatePrivateRoom(c *gin.Context) {
 	}
 	req.IsPrivate = true
 
-	client, _ := utils.NewFirebaseClient(c)
-	session, _ := utils.GetSessionFromContext(c)
-	uid, err := utils.GetIDFromSession(client, c, session)
+	uid, err := utils.NewAuth(c).GetSession().GetUserID()
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"data": gin.H{
