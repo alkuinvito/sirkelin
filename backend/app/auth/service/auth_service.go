@@ -2,19 +2,24 @@ package service
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"sirkelin/backend/initializers"
+	"sirkelin/backend/models"
 	"strings"
 	"time"
 
-	"firebase.google.com/go/auth"
+	"github.com/gin-gonic/gin"
+
 	"sirkelin/backend/app/auth/repository"
+
+	"firebase.google.com/go/auth"
 )
 
 const EXPIRES_IN = time.Hour * 24
 
 type AuthService struct {
 	repository *repository.AuthRepository
+	db         *gorm.DB
 }
 
 type IAuthService interface {
@@ -27,9 +32,10 @@ type IAuthService interface {
 	VerifySessionToken(c *gin.Context) (*auth.Token, error)
 }
 
-func NewAuthService(repository *repository.AuthRepository) *AuthService {
+func NewAuthService(repository *repository.AuthRepository, db *gorm.DB) *AuthService {
 	return &AuthService{
 		repository: repository,
+		db:         db,
 	}
 }
 
@@ -75,8 +81,10 @@ func (service *AuthService) SignIn(c *gin.Context, tokenString string) (string, 
 		return "", err
 	}
 
-	err = service.repository.Save(
-		&repository.User{
+	tx := service.db.Begin()
+	defer initializers.CommitOrRollback(tx)
+	err = service.repository.Save(tx,
+		&models.User{
 			ID:       token.Subject,
 			Fullname: token.Claims["name"].(string),
 			Picture:  token.Claims["picture"].(string),

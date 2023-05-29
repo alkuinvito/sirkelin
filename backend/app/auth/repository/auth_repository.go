@@ -3,63 +3,61 @@ package repository
 import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"sirkelin/backend/initializers"
 	"sirkelin/backend/models"
 	"strings"
 )
 
 type AuthRepository struct {
-	db *gorm.DB
 }
 
 type IAuthRepository interface {
-	Get() ([]models.User, error)
-	GetByID(uid string) (*models.User, error)
-	GetByKeyword(keyword string) ([]models.User, error)
-	GetExcept(uid string) ([]models.User, error)
-	Save(user *models.User) error
+	Get(db *gorm.DB) ([]models.User, error)
+	GetByID(db *gorm.DB, uid string) (*models.User, error)
+	GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error)
+	GetExcept(db *gorm.DB, uid string) ([]models.User, error)
+	Save(db *gorm.DB, user *models.User) error
 }
 
 func NewAuthRepository() *AuthRepository {
-	return &AuthRepository{db: initializers.DB}
+	return &AuthRepository{}
 }
 
-func (repo *AuthRepository) Get() ([]models.User, error) {
+func (repo *AuthRepository) Get(db *gorm.DB) ([]models.User, error) {
 	var result []models.User
-	err := repo.db.Select("id", "fullname", "picture").Find(&result).Error
+	err := db.Select("id", "fullname", "picture").Find(&result).Error
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (repo *AuthRepository) GetByID(uid string) (*models.User, error) {
+func (repo *AuthRepository) GetByID(db *gorm.DB, uid string) (*models.User, error) {
 	var result models.User
-	err := repo.db.Where("id = ?", uid).First(&result).Error
+	err := db.Where("id = ?", uid).First(&result).Error
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (repo *AuthRepository) GetByKeyword(keyword string) ([]models.User, error) {
+func (repo *AuthRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error) {
 	var result []models.User
-	err := repo.db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
+	err := db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (repo *AuthRepository) GetExcept(uid string) ([]models.User, error) {
+func (repo *AuthRepository) GetExcept(db *gorm.DB, uid string) ([]models.User, error) {
 	var result []models.User
-	err := repo.db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
+	err := db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (repo *AuthRepository) Save(user *models.User) error {
-	return repo.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
+func (repo *AuthRepository) Save(db *gorm.DB, user *models.User) error {
+	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
 }
