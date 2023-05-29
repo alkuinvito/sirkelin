@@ -33,7 +33,7 @@ services:
     depends_on:
       - traefik
       - postgres
-    command: CompileDaemon -command="./sirkelin"
+    command: CompileDaemon -command="./backend"
   frontend:
     image: frontend
     build:
