@@ -9,6 +9,7 @@ import (
 	"sirkelin/backend/app/auth/controller"
 	"sirkelin/backend/app/auth/repository"
 	"sirkelin/backend/app/auth/service"
+	"sirkelin/backend/initializers"
 	"sirkelin/backend/router"
 )
 
@@ -23,6 +24,7 @@ var authSet = wire.NewSet(
 
 func CreateHTTPServer() *http.Server {
 	panic(wire.Build(
+		initializers.NewDB,
 		NewServer,
 		router.NewRouter,
 		authSet,

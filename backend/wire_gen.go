@@ -12,6 +12,7 @@ import (
 	"sirkelin/backend/app/auth/controller"
 	"sirkelin/backend/app/auth/repository"
 	"sirkelin/backend/app/auth/service"
+	"sirkelin/backend/initializers"
 	"sirkelin/backend/router"
 )
 
@@ -19,7 +20,8 @@ import (
 
 func CreateHTTPServer() *http.Server {
 	authRepository := repository.NewAuthRepository()
-	authService := service.NewAuthService(authRepository)
+	db := initializers.NewDB()
+	authService := service.NewAuthService(authRepository, db)
 	authController := controller.NewAuthController(authService)
 	routerRouter := router.NewRouter(authController)
 	server := NewServer(routerRouter)

@@ -8,14 +8,20 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
-func ConnectToDB() {
-	var err error
+func NewDB() *gorm.DB {
 	dsn := os.Getenv("DB_URL")
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Unable to connect to database")
+		return nil
+	}
+	return db
+}
+
+func CommitOrRollback(tx *gorm.DB) {
+	if r := recover(); r != nil {
+		tx.Rollback()
+	} else {
+		tx.Commit()
 	}
 }

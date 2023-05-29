@@ -15,7 +15,6 @@ import (
 
 func init() {
 	initializers.LoadEnvVar()
-	initializers.ConnectToDB()
 }
 
 func NewServer(router *router.Router) *http.Server {
