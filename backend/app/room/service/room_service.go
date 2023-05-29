@@ -1,24 +1,24 @@
 package service
 
 import (
-	authRepository "sirkelin/backend/app/auth/repository"
-	roomRepository "sirkelin/backend/app/room/repository"
+	"sirkelin/backend/app/room/repository"
+	"sirkelin/backend/models"
 )
 
 type RoomService struct {
-	repository roomRepository.RoomRepository
+	repository repository.RoomRepository
 }
 
 type IRoomService interface {
-	CreateRoom([]*authRepository.User, ...any)
+	CreateRoom([]*models.User) error
 }
 
-func NewRoomService(repository roomRepository.RoomRepository) *RoomService {
+func NewRoomService(repository repository.RoomRepository) *RoomService {
 	return &RoomService{
 		repository: repository,
 	}
 }
 
-func (service *RoomService) CreateRoom() {
-
+func (service *RoomService) CreateRoom([]*models.User) error {
+	return nil
 }
