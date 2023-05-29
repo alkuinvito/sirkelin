@@ -1,43 +1,31 @@
 package repository
 
 import (
-	"sirkelin/backend/app/room/repository"
-	"sirkelin/backend/initializers"
-	"strings"
-	"time"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"sirkelin/backend/initializers"
+	"sirkelin/backend/models"
+	"strings"
 )
-
-type User struct {
-	ID        string
-	Username  string
-	Fullname  string
-	Picture   string
-	Email     string             `gorm:"uniqueIndex;not null"`
-	Rooms     []*repository.Room `gorm:"many2many:user_rooms"`
-	CreatedAt time.Time
-}
 
 type AuthRepository struct {
 	db *gorm.DB
 }
 
 type IAuthRepository interface {
-	Get() ([]User, error)
-	GetByID(uid string) (*User, error)
-	GetByKeyword(keyword string) ([]User, error)
-	GetExcept(uid string) ([]User, error)
-	Save(user *User) error
+	Get() ([]models.User, error)
+	GetByID(uid string) (*models.User, error)
+	GetByKeyword(keyword string) ([]models.User, error)
+	GetExcept(uid string) ([]models.User, error)
+	Save(user *models.User) error
 }
 
 func NewAuthRepository() *AuthRepository {
 	return &AuthRepository{db: initializers.DB}
 }
 
-func (repo *AuthRepository) Get() ([]User, error) {
-	var result []User
+func (repo *AuthRepository) Get() ([]models.User, error) {
+	var result []models.User
 	err := repo.db.Select("id", "fullname", "picture").Find(&result).Error
 	if err != nil {
 		return nil, err
@@ -45,8 +33,8 @@ func (repo *AuthRepository) Get() ([]User, error) {
 	return result, nil
 }
 
-func (repo *AuthRepository) GetByID(uid string) (*User, error) {
-	var result User
+func (repo *AuthRepository) GetByID(uid string) (*models.User, error) {
+	var result models.User
 	err := repo.db.Where("id = ?", uid).First(&result).Error
 	if err != nil {
 		return nil, err
@@ -54,8 +42,8 @@ func (repo *AuthRepository) GetByID(uid string) (*User, error) {
 	return &result, nil
 }
 
-func (repo *AuthRepository) GetByKeyword(keyword string) ([]User, error) {
-	var result []User
+func (repo *AuthRepository) GetByKeyword(keyword string) ([]models.User, error) {
+	var result []models.User
 	err := repo.db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
 	if err != nil {
 		return nil, err
@@ -63,8 +51,8 @@ func (repo *AuthRepository) GetByKeyword(keyword string) ([]User, error) {
 	return result, nil
 }
 
-func (repo *AuthRepository) GetExcept(uid string) ([]User, error) {
-	var result []User
+func (repo *AuthRepository) GetExcept(uid string) ([]models.User, error) {
+	var result []models.User
 	err := repo.db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
 	if err != nil {
 		return nil, err
@@ -72,6 +60,6 @@ func (repo *AuthRepository) GetExcept(uid string) ([]User, error) {
 	return result, nil
 }
 
-func (repo *AuthRepository) Save(user *User) error {
+func (repo *AuthRepository) Save(user *models.User) error {
 	return repo.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
 }
