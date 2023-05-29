@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/alkuinvito/sirkelin/app/room/repository"
 	"github.com/alkuinvito/sirkelin/initializers"
 	"strings"
 	"time"
@@ -14,8 +15,8 @@ type User struct {
 	Username  string
 	Fullname  string
 	Picture   string
-	Email     string  `gorm:"uniqueIndex;not null"`
-	Rooms     []*Room `gorm:"many2many:user_rooms"`
+	Email     string             `gorm:"uniqueIndex;not null"`
+	Rooms     []*repository.Room `gorm:"many2many:user_rooms"`
 	CreatedAt time.Time
 }
 
@@ -24,27 +25,45 @@ type AuthRepository struct {
 }
 
 type IAuthRepository interface {
-	AuthenticateByIDToken(id, fullname, picture, email string) error
-	GetUsers(uid string) ([]User, error)
-	GetUsersByName(fullname string) ([]User, error)
-	GetUserByID(uid string) (*User, error)
+	Get() ([]User, error)
+	GetByID(uid string) (*User, error)
+	GetByKeyword(keyword string) ([]User, error)
+	GetExcept(uid string) ([]User, error)
+	Save(user *User) error
 }
 
-func Init() *AuthRepository {
+func NewAuthRepository() *AuthRepository {
 	return &AuthRepository{db: initializers.DB}
 }
 
-func (repo *AuthRepository) AuthenticateByIDToken(id, fullname, picture, email string) error {
-	user := &User{
-		ID:       id,
-		Fullname: fullname,
-		Picture:  picture,
-		Email:    email,
+func (repo *AuthRepository) Get() ([]User, error) {
+	var result []User
+	err := repo.db.Select("id", "fullname", "picture").Find(&result).Error
+	if err != nil {
+		return nil, err
 	}
-	return repo.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
+	return result, nil
 }
 
-func (repo *AuthRepository) GetUsers(uid string) ([]User, error) {
+func (repo *AuthRepository) GetByID(uid string) (*User, error) {
+	var result User
+	err := repo.db.Where("id = ?", uid).First(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (repo *AuthRepository) GetByKeyword(keyword string) ([]User, error) {
+	var result []User
+	err := repo.db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (repo *AuthRepository) GetExcept(uid string) ([]User, error) {
 	var result []User
 	err := repo.db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
 	if err != nil {
@@ -53,20 +72,6 @@ func (repo *AuthRepository) GetUsers(uid string) ([]User, error) {
 	return result, nil
 }
 
-func (repo *AuthRepository) GetUsersByName(fullname string) ([]User, error) {
-	var result []User
-	err := repo.db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(fullname)+"%").Limit(5).Find(&result).Error
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (repo *AuthRepository) GetUserByID(uid string) (*User, error) {
-	var result User
-	err := repo.db.Where("id = ?", uid).First(&result).Error
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+func (repo *AuthRepository) Save(user *User) error {
+	return repo.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
 }

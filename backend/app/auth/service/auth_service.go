@@ -2,135 +2,114 @@ package service
 
 import (
 	"errors"
+	"github.com/alkuinvito/sirkelin/initializers"
+	"github.com/gin-gonic/gin"
 	"strings"
 	"time"
 
-	authRepository "github.com/alkuinvito/sirkelin/app/auth/repository"
-	"github.com/alkuinvito/sirkelin/initializers"
-
 	"firebase.google.com/go/auth"
-	"github.com/gin-gonic/gin"
+	"github.com/alkuinvito/sirkelin/app/auth/repository"
 )
 
 const EXPIRES_IN = time.Hour * 24
 
 type AuthService struct {
-	ctx        *gin.Context
-	client     *auth.Client
-	token      *auth.Token
-	repository *authRepository.AuthRepository
-	err        error
+	repository repository.AuthRepository
 }
 
 type IAuthService interface {
-	Error() error
-	getTokenFromCtx() *AuthService
-	Init(c *gin.Context) *AuthService
-	revokeToken() *AuthService
-	setError(err error) *AuthService
-	setToken(token *auth.Token) *AuthService
-	SignIn(tokenString string) *AuthService
-	SignOut() *AuthService
-	Token() *auth.Token
-	verifyIDToken(tokenString string) *AuthService
+	getTokenFromCtx(c *gin.Context, client *auth.Client) (*auth.Token, error)
+	initClient(c *gin.Context) (*auth.Client, error)
+	revokeToken(c *gin.Context, client *auth.Client) error
+	SignIn(c *gin.Context, tokenString string) (string, error)
+	SignOut(c *gin.Context) error
+	verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error)
 }
 
-func (svc *AuthService) Init(c *gin.Context) *AuthService {
-	client, err := initializers.InitializeAppDefault().Auth(c)
-	authRepo := authRepository.Init()
-
+func NewAuthService(repository repository.AuthRepository) *AuthService {
 	return &AuthService{
-		ctx:        c,
-		client:     client,
-		repository: authRepo,
-		err:        err,
+		repository: repository,
 	}
 }
 
-func (svc *AuthService) Error() error {
-	return svc.err
-}
-
-func (svc *AuthService) getTokenFromCtx() *AuthService {
-	bearerToken := svc.ctx.GetHeader("Authorization")
+func (service *AuthService) getTokenFromCtx(c *gin.Context, client *auth.Client) (*auth.Token, error) {
+	bearerToken := c.GetHeader("Authorization")
 	tokenString := strings.Split(bearerToken, " ")
 
 	if len(tokenString) != 2 {
-		cookies, err := svc.ctx.Cookie("session")
+		cookies, err := c.Cookie("session")
 		if err != nil {
-			return svc.setError(err)
+			return nil, err
 		}
-		token, err := svc.client.VerifySessionCookieAndCheckRevoked(svc.ctx, cookies)
-		return svc.setToken(token).setError(err)
+		return client.VerifySessionCookieAndCheckRevoked(c, cookies)
 	}
-
-	token, err := svc.client.VerifySessionCookieAndCheckRevoked(svc.ctx, tokenString[0])
-	return svc.setToken(token).setError(err)
+	return client.VerifySessionCookieAndCheckRevoked(c, tokenString[0])
 }
 
-func (svc *AuthService) revokeToken() *AuthService {
-	svc.getTokenFromCtx()
-	if svc.Error() != nil {
-		return svc
-	}
-
-	if err := svc.client.RevokeRefreshTokens(svc.ctx, svc.token.UID); err != nil {
-		return svc.setError(err)
-	}
-
-	return svc
+func (service *AuthService) initClient(c *gin.Context) (*auth.Client, error) {
+	return initializers.InitializeAppDefault().Auth(c)
 }
 
-func (svc *AuthService) setError(err error) *AuthService {
-	svc.err = err
-	return svc
-}
-
-func (svc *AuthService) setToken(token *auth.Token) *AuthService {
-	svc.token = token
-	return svc
-}
-
-func (svc *AuthService) SignIn(tokenString string) (string, error) {
-	svc.verifyIDToken(tokenString)
-	if svc.Error() != nil {
-		return "", svc.Error()
+func (service *AuthService) revokeToken(c *gin.Context, client *auth.Client) error {
+	token, err := service.getTokenFromCtx(c, client)
+	if err != nil {
+		return err
 	}
 
-	err := svc.repository.AuthenticateByIDToken(
-		svc.token.Subject,
-		svc.token.Claims["name"].(string),
-		svc.token.Claims["picture"].(string),
-		svc.token.Claims["email"].(string),
+	if err := client.RevokeRefreshTokens(c, token.UID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *AuthService) SignIn(c *gin.Context, tokenString string) (string, error) {
+	client, err := service.initClient(c)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := service.verifyIDToken(c, client, tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	err = service.repository.Save(
+		&repository.User{
+			ID:       token.Subject,
+			Fullname: token.Claims["name"].(string),
+			Picture:  token.Claims["picture"].(string),
+			Email:    token.Claims["email"].(string),
+		},
 	)
 	if err != nil {
-		return "", svc.Error()
+		return "", err
 	}
 
-	return svc.client.SessionCookie(svc.ctx, tokenString, EXPIRES_IN)
+	return client.SessionCookie(c, tokenString, EXPIRES_IN)
 }
 
-func (svc *AuthService) SignOut() error {
-	return svc.revokeToken().Error()
+func (service *AuthService) SignOut(c *gin.Context) error {
+	client, err := service.initClient(c)
+	if err != nil {
+		return err
+	}
+	return service.revokeToken(c, client)
 }
 
-func (svc *AuthService) Token() *auth.Token {
-	return svc.getTokenFromCtx().token
-}
-
-func (svc *AuthService) verifyIDToken(tokenString string) *AuthService {
-	token, err := svc.client.VerifyIDTokenAndCheckRevoked(svc.ctx, tokenString)
+func (service *AuthService) verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error) {
+	token, err := client.VerifyIDTokenAndCheckRevoked(c, tokenString)
 	if err != nil {
 		if err.Error() == "ID token has been revoked" {
-			return svc.setError(errors.New("user must reauthenticate"))
+			return nil, errors.New("user must reauthenticate")
 		} else {
-			return svc.setError(errors.New("invalid id token"))
+			return nil, errors.New("invalid id token")
 		}
 	}
 
 	if time.Now().Unix()-token.IssuedAt > 5*60 {
-		return svc.setError(errors.New("recent sign-in required"))
+		return nil, errors.New("recent sign-in required")
 	}
 
-	return svc.setToken(token).setError(err)
+	return token, err
 }
