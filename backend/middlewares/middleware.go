@@ -2,15 +2,30 @@ package middlewares
 
 import (
 	"net/http"
+	authService "sirkelin/backend/app/auth/service"
+	roomService "sirkelin/backend/app/room/service"
 
-	authService "github.com/alkuinvito/sirkelin/app/auth/service"
 	"github.com/gin-gonic/gin"
 )
 
-func RoomAccess() gin.HandlerFunc {
+type Middleware struct {
+	Engine      *gin.Engine
+	authService authService.AuthService
+	roomService roomService.RoomService
+}
+
+func NewMiddleware(engine *gin.Engine, authService authService.AuthService, roomService roomService.RoomService) *Middleware {
+	return &Middleware{
+		Engine:      engine,
+		authService: authService,
+		roomService: roomService,
+	}
+}
+
+func (middleware *Middleware) RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		auth := authService.Init(c)
-		if auth.Error() != nil {
+		_, err := middleware.authService.VerifySessionToken(c)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid session token",
 			})
@@ -21,7 +36,7 @@ func RoomAccess() gin.HandlerFunc {
 	}
 }
 
-func RoomPrivilege() gin.HandlerFunc {
+func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var param models.RoomIDParams
 		var room models.Room
@@ -38,8 +53,8 @@ func RoomPrivilege() gin.HandlerFunc {
 			return
 		}
 
-		auth := authService.Init(c)
-		if auth.Error() != nil {
+		token, err := middleware.authService.VerifySessionToken(c)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"data": gin.H{
 					"error": "invalid session token",
@@ -50,7 +65,7 @@ func RoomPrivilege() gin.HandlerFunc {
 		}
 
 		room.ID = param.RoomID
-		uid := auth.Token().UID
+		uid := token.UID
 		if room.GetRoomPrivilege(uid) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"data": gin.H{

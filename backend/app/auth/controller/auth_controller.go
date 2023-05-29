@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"github.com/alkuinvito/sirkelin/app/auth/service"
 	"net/http"
 	"os"
+	"sirkelin/backend/app/auth/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +14,7 @@ type GetSessionParams struct {
 }
 
 type AuthController struct {
-	service service.AuthService
+	service *service.AuthService
 }
 
 type IAuthController interface {
@@ -22,7 +22,7 @@ type IAuthController interface {
 	SignOut(c *gin.Context)
 }
 
-func NewAuthController(authService service.AuthService) *AuthController {
+func NewAuthController(authService *service.AuthService) *AuthController {
 	return &AuthController{
 		service: authService,
 	}

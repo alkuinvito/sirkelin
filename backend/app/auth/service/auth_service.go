@@ -2,37 +2,38 @@ package service
 
 import (
 	"errors"
-	"github.com/alkuinvito/sirkelin/initializers"
 	"github.com/gin-gonic/gin"
+	"sirkelin/backend/initializers"
 	"strings"
 	"time"
 
 	"firebase.google.com/go/auth"
-	"github.com/alkuinvito/sirkelin/app/auth/repository"
+	"sirkelin/backend/app/auth/repository"
 )
 
 const EXPIRES_IN = time.Hour * 24
 
 type AuthService struct {
-	repository repository.AuthRepository
+	repository *repository.AuthRepository
 }
 
 type IAuthService interface {
-	getTokenFromCtx(c *gin.Context, client *auth.Client) (*auth.Token, error)
+	getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error)
 	initClient(c *gin.Context) (*auth.Client, error)
 	revokeToken(c *gin.Context, client *auth.Client) error
 	SignIn(c *gin.Context, tokenString string) (string, error)
 	SignOut(c *gin.Context) error
 	verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error)
+	VerifySessionToken(c *gin.Context) (*auth.Token, error)
 }
 
-func NewAuthService(repository repository.AuthRepository) *AuthService {
+func NewAuthService(repository *repository.AuthRepository) *AuthService {
 	return &AuthService{
 		repository: repository,
 	}
 }
 
-func (service *AuthService) getTokenFromCtx(c *gin.Context, client *auth.Client) (*auth.Token, error) {
+func (service *AuthService) getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error) {
 	bearerToken := c.GetHeader("Authorization")
 	tokenString := strings.Split(bearerToken, " ")
 
@@ -51,7 +52,7 @@ func (service *AuthService) initClient(c *gin.Context) (*auth.Client, error) {
 }
 
 func (service *AuthService) revokeToken(c *gin.Context, client *auth.Client) error {
-	token, err := service.getTokenFromCtx(c, client)
+	token, err := service.getSessionToken(c, client)
 	if err != nil {
 		return err
 	}
@@ -112,4 +113,12 @@ func (service *AuthService) verifyIDToken(c *gin.Context, client *auth.Client, t
 	}
 
 	return token, err
+}
+
+func (service *AuthService) VerifySessionToken(c *gin.Context) (*auth.Token, error) {
+	client, err := service.initClient(c)
+	if err != nil {
+		return nil, err
+	}
+	return service.getSessionToken(c, client)
 }

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/alkuinvito/sirkelin/app/room/repository"
-	"github.com/alkuinvito/sirkelin/initializers"
+	"sirkelin/backend/app/room/repository"
+	"sirkelin/backend/initializers"
 	"strings"
 	"time"
 

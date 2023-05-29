@@ -1,28 +1,27 @@
 package repository
 
 import (
-	"github.com/alkuinvito/sirkelin/app/auth/repository"
 	"gorm.io/gorm"
 	"time"
 
-	"github.com/alkuinvito/sirkelin/initializers"
+	"sirkelin/backend/initializers"
 )
 
 type Room struct {
 	ID        string
 	Name      string
 	Picture   string
-	Users     []*repository.User `gorm:"many2many:user_rooms"`
+	Users     []*User `gorm:"many2many:user_rooms"`
 	Messages  []Message
 	IsPrivate bool `gorm:"not null"`
 	CreatedAt time.Time
 }
 
 type CreateRoomParams struct {
-	Name      string             `json:"name"`
-	Picture   string             `json:"picture"`
-	Users     []*repository.User `json:"users"`
-	IsPrivate bool               `json:"is_private"`
+	Name      string  `json:"name"`
+	Picture   string  `json:"picture"`
+	Users     []*User `json:"users"`
+	IsPrivate bool    `json:"is_private"`
 }
 
 type RoomRepository struct {
@@ -36,7 +35,7 @@ type IRoomRepository interface {
 	Peek(room *Room) error
 }
 
-func Init() *RoomRepository {
+func NewRoomRepository() *RoomRepository {
 	return &RoomRepository{db: initializers.DB}
 }
 

@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/alkuinvito/sirkelin/initializers"
-	"github.com/alkuinvito/sirkelin/models"
+	"sirkelin/backend/initializers"
 )
 
 func init() {

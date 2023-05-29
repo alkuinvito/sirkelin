@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alkuinvito/sirkelin/initializers"
-	"github.com/alkuinvito/sirkelin/router"
+	"sirkelin/backend/initializers"
+	"sirkelin/backend/router"
 )
 
 func init() {
@@ -18,14 +18,15 @@ func init() {
 	initializers.ConnectToDB()
 }
 
-func main() {
-	routesHandler := router.Handle()
-
-	srv := &http.Server{
+func NewServer(router *router.Router) *http.Server {
+	return &http.Server{
 		Addr:    os.Getenv("APP_PORT"),
-		Handler: routesHandler,
+		Handler: router.Handle(),
 	}
+}
 
+func main() {
+	srv := CreateHTTPServer()
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)

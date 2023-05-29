@@ -1,18 +1,24 @@
 package service
 
 import (
-	authRepository "github.com/alkuinvito/sirkelin/app/auth/repository"
-	roomRepository "github.com/alkuinvito/sirkelin/app/room/repository"
+	authRepository "sirkelin/backend/app/auth/repository"
+	roomRepository "sirkelin/backend/app/room/repository"
 )
 
-type service struct {
-	repository *roomRepository.RoomRepository
+type RoomService struct {
+	repository roomRepository.RoomRepository
 }
 
-type IService interface {
+type IRoomService interface {
 	CreateRoom([]*authRepository.User, ...any)
 }
 
-func (svc *service) CreateRoom() {
+func NewRoomService(repository roomRepository.RoomRepository) *RoomService {
+	return &RoomService{
+		repository: repository,
+	}
+}
+
+func (service *RoomService) CreateRoom() {
 
 }

@@ -1,11 +1,11 @@
-module github.com/alkuinvito/sirkelin
+module sirkelin/backend
 
 go 1.19
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/gin-gonic/gin v1.9.0
-	github.com/google/uuid v1.3.0
+	github.com/google/wire v0.5.0
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.112.0
 	gorm.io/driver/postgres v1.5.0
@@ -30,6 +30,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
