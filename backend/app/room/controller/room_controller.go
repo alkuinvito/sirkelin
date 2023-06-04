@@ -14,12 +14,13 @@ type RoomController struct {
 	roomService *roomService.RoomService
 }
 
-type IRoomRepository interface {
+type IRoomController interface {
 	CreateRoom(c*gin.Context)
 }
 
-func NewRoomController(roomService *roomService.RoomService) *RoomController {
+func NewRoomController(authService *authService.AuthService, roomService *roomService.RoomService) *RoomController {
 	return &RoomController{
+		authService: authService,
 		roomService: roomService,
 	}
 }
@@ -31,18 +32,14 @@ func (controller *RoomController) CreateRoom(c *gin.Context) {
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"data": gin.H{
-				"error": "invalid create room request body",
-			},
+			"error": "invalid create room request body",
 		})
 	}
 
 	token, err := controller.authService.VerifySessionToken(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"data": gin.H{
-				"error": "invalid bearer token",
-			},
+			"error": "invalid bearer token",
 		})
 		return
 	}
@@ -52,9 +49,7 @@ func (controller *RoomController) CreateRoom(c *gin.Context) {
 	roomID, err := controller.roomService.Create(req.Users)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"data": gin.H{
-				"error": "Failed to create new room",
-			},
+			"error": "Failed to create new room",
 		})
 		return
 	}

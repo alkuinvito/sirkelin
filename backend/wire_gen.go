@@ -12,6 +12,9 @@ import (
 	"sirkelin/backend/app/auth/controller"
 	"sirkelin/backend/app/auth/repository"
 	"sirkelin/backend/app/auth/service"
+	controller2 "sirkelin/backend/app/room/controller"
+	repository2 "sirkelin/backend/app/room/repository"
+	service2 "sirkelin/backend/app/room/service"
 	"sirkelin/backend/initializers"
 	"sirkelin/backend/router"
 )
@@ -23,7 +26,10 @@ func CreateHTTPServer() *http.Server {
 	db := initializers.NewDB()
 	authService := service.NewAuthService(authRepository, db)
 	authController := controller.NewAuthController(authService)
-	routerRouter := router.NewRouter(authController)
+	roomRepository := repository2.NewRoomRepository()
+	roomService := service2.NewRoomService(roomRepository, db)
+	roomController := controller2.NewRoomController(authService, roomService)
+	routerRouter := router.NewRouter(authController, roomController)
 	server := NewServer(routerRouter)
 	return server
 }
@@ -31,3 +37,5 @@ func CreateHTTPServer() *http.Server {
 // injector.go:
 
 var authSet = wire.NewSet(repository.NewAuthRepository, wire.Bind(new(repository.IAuthRepository), new(*repository.AuthRepository)), service.NewAuthService, wire.Bind(new(service.IAuthService), new(*service.AuthService)), controller.NewAuthController, wire.Bind(new(controller.IAuthController), new(*controller.AuthController)))
+
+var roomSet = wire.NewSet(repository2.NewRoomRepository, wire.Bind(new(repository2.IRoomRepository), new(*repository2.RoomRepository)), service2.NewRoomService, wire.Bind(new(service2.IRoomService), new(*service2.RoomService)), controller2.NewRoomController, wire.Bind(new(controller2.IRoomController), new(*controller2.RoomController)))

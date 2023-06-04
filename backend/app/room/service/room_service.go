@@ -10,29 +10,44 @@ import (
 )
 
 type RoomService struct {
-	repository repository.RoomRepository
-	db *gorm.DB
+	repository *repository.RoomRepository
+	db         *gorm.DB
 }
 
 type IRoomService interface {
-	Create([]*models.User) (string, error)
+	Create(users []*models.User) (string, error)
+	GetByUID(uid string) ([]models.Room, error)
 }
 
-func NewRoomService(repository repository.RoomRepository) *RoomService {
+func NewRoomService(repository *repository.RoomRepository, db *gorm.DB) *RoomService {
 	return &RoomService{
 		repository: repository,
+		db:         db,
 	}
 }
 
-func (service *RoomService) Create([]*models.User) (string, error) {
+func (service *RoomService) Create(users []*models.User) (string, error) {
 	roomID := uuid.NewString()
+	room := &models.Room{
+		ID:    roomID,
+		Users: users,
+	}
 
 	tx := service.db.Begin()
 	defer initializers.CommitOrRollback(tx)
-	err := service.repository.Create(tx, &models.Room{ID: roomID})
+	err := service.repository.Create(tx, room)
 	if err != nil {
 		return "", err
 	}
-
 	return roomID, nil
+}
+
+func (service *RoomService) GetByUID(uid string) ([]models.Room, error) {
+	tx := service.db.Begin()
+	defer initializers.CommitOrRollback(tx)
+	rooms, err := service.repository.GetByUID(tx, uid)
+	if err != nil {
+		return []models.Room{}, err
+	}
+	return rooms, nil
 }

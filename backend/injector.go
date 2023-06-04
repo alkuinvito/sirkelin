@@ -6,20 +6,33 @@ package main
 import (
 	"github.com/google/wire"
 	"net/http"
-	"sirkelin/backend/app/auth/controller"
-	"sirkelin/backend/app/auth/repository"
-	"sirkelin/backend/app/auth/service"
+	authController "sirkelin/backend/app/auth/controller"
+	authRepository "sirkelin/backend/app/auth/repository"
+	authService "sirkelin/backend/app/auth/service"
+
+	roomController "sirkelin/backend/app/room/controller"
+	roomRepository "sirkelin/backend/app/room/repository"
+	roomService "sirkelin/backend/app/room/service"
 	"sirkelin/backend/initializers"
 	"sirkelin/backend/router"
 )
 
 var authSet = wire.NewSet(
-	repository.NewAuthRepository,
-	wire.Bind(new(repository.IAuthRepository), new(*repository.AuthRepository)),
-	service.NewAuthService,
-	wire.Bind(new(service.IAuthService), new(*service.AuthService)),
-	controller.NewAuthController,
-	wire.Bind(new(controller.IAuthController), new(*controller.AuthController)),
+	authRepository.NewAuthRepository,
+	wire.Bind(new(authRepository.IAuthRepository), new(*authRepository.AuthRepository)),
+	authService.NewAuthService,
+	wire.Bind(new(authService.IAuthService), new(*authService.AuthService)),
+	authController.NewAuthController,
+	wire.Bind(new(authController.IAuthController), new(*authController.AuthController)),
+)
+
+var roomSet = wire.NewSet(
+	roomRepository.NewRoomRepository,
+	wire.Bind(new(roomRepository.IRoomRepository), new(*roomRepository.RoomRepository)),
+	roomService.NewRoomService,
+	wire.Bind(new(roomService.IRoomService), new(*roomService.RoomService)),
+	roomController.NewRoomController,
+	wire.Bind(new(roomController.IRoomController), new(*roomController.RoomController)),
 )
 
 func CreateHTTPServer() *http.Server {
@@ -28,6 +41,7 @@ func CreateHTTPServer() *http.Server {
 		NewServer,
 		router.NewRouter,
 		authSet,
+		roomSet,
 	))
 	return nil
 }
