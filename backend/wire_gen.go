@@ -16,6 +16,7 @@ import (
 	repository2 "sirkelin/backend/app/room/repository"
 	service2 "sirkelin/backend/app/room/service"
 	"sirkelin/backend/initializers"
+	"sirkelin/backend/middlewares"
 	"sirkelin/backend/router"
 )
 
@@ -25,11 +26,12 @@ func CreateHTTPServer() *http.Server {
 	authRepository := repository.NewAuthRepository()
 	db := initializers.NewDB()
 	authService := service.NewAuthService(authRepository, db)
-	authController := controller.NewAuthController(authService)
 	roomRepository := repository2.NewRoomRepository()
 	roomService := service2.NewRoomService(roomRepository, db)
+	middleware := middlewares.NewMiddleware(authService, roomService)
+	authController := controller.NewAuthController(authService)
 	roomController := controller2.NewRoomController(authService, roomService)
-	routerRouter := router.NewRouter(authController, roomController)
+	routerRouter := router.NewRouter(middleware, authController, roomController)
 	server := NewServer(routerRouter)
 	return server
 }

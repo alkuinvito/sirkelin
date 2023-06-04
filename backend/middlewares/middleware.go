@@ -5,23 +5,21 @@ import (
 	"net/http"
 	authService "sirkelin/backend/app/auth/service"
 	roomService "sirkelin/backend/app/room/service"
-
-	"github.com/gin-gonic/gin"
+	"sirkelin/backend/models"
 )
 
 type Middleware struct {
-	Engine      *gin.Engine
-	authService authService.AuthService
-	roomService roomService.RoomService
+	authService *authService.AuthService
+	roomService *roomService.RoomService
 }
 
 type IMiddleware interface {
 	RoomAccess() gin.HandlerFunc
+	RoomPrivilege() gin.HandlerFunc
 }
 
-func NewMiddleware(engine *gin.Engine, authService authService.AuthService, roomService roomService.RoomService) *Middleware {
+func NewMiddleware(authService *authService.AuthService, roomService *roomService.RoomService) *Middleware {
 	return &Middleware{
-		Engine:      engine,
 		authService: authService,
 		roomService: roomService,
 	}
@@ -44,15 +42,12 @@ func (middleware *Middleware) RoomAccess() gin.HandlerFunc {
 func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var param models.RoomIDParams
-		var room models.Room
 		var err error
 
 		err = c.ShouldBindUri(&param)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"data": gin.H{
-					"error": "invalid room id",
-				},
+				"error": "invalid room id",
 			})
 			c.Abort()
 			return
@@ -61,21 +56,26 @@ func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
 		token, err := middleware.authService.VerifySessionToken(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"data": gin.H{
-					"error": "invalid session token",
-				},
+				"error": "invalid session token",
 			})
 			c.Abort()
 			return
 		}
 
-		room.ID = param.RoomID
+		roomID := param.RoomID
 		uid := token.UID
-		if room.GetRoomPrivilege(uid) {
+		isParticipant, err := middleware.roomService.CheckRoomParticipant(roomID, uid)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to check participants in current room",
+			})
+			c.Abort()
+			return
+		}
+
+		if !isParticipant {
 			c.JSON(http.StatusForbidden, gin.H{
-				"data": gin.H{
-					"error": "user is not member of the room",
-				},
+				"error": "user is not a participant of this room",
 			})
 			c.Abort()
 			return

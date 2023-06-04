@@ -9,6 +9,7 @@ import (
 	authController "sirkelin/backend/app/auth/controller"
 	authRepository "sirkelin/backend/app/auth/repository"
 	authService "sirkelin/backend/app/auth/service"
+	"sirkelin/backend/middlewares"
 
 	roomController "sirkelin/backend/app/room/controller"
 	roomRepository "sirkelin/backend/app/room/repository"
@@ -39,6 +40,7 @@ func CreateHTTPServer() *http.Server {
 	panic(wire.Build(
 		initializers.NewDB,
 		NewServer,
+		middlewares.NewMiddleware,
 		router.NewRouter,
 		authSet,
 		roomSet,

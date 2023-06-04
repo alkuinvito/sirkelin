@@ -10,7 +10,7 @@ type RoomRepository struct {
 }
 
 type IRoomRepository interface {
-	Count(db *gorm.DB, room *models.Room, uid string) (int, error)
+	Count(db *gorm.DB, roomID, uid string) (int, error)
 	Create(db *gorm.DB, room *models.Room) error
 	GetByUID(db *gorm.DB, uid string) ([]models.Room, error)
 	Peek(db *gorm.DB, room *models.Room) error
@@ -20,9 +20,9 @@ func NewRoomRepository() *RoomRepository {
 	return &RoomRepository{}
 }
 
-func (repo *RoomRepository) Count(db *gorm.DB, room *models.Room, uid string) (int, error) {
+func (repo *RoomRepository) Count(db *gorm.DB, roomID, uid string) (int, error) {
 	var rows int64
-	err := db.Table("user_rooms").Where("room_id = ? AND user_id = ?", room.ID, uid).Count(&rows).Error
+	err := db.Table("user_rooms").Where("room_id = ? AND user_id = ?", roomID, uid).Count(&rows).Error
 	if err != nil {
 		return -1, err
 	}

@@ -18,3 +18,7 @@ type CreateRoomParams struct {
 	Users     []*User `json:"users"`
 	IsPrivate bool    `json:"is_private"`
 }
+
+type RoomIDParams struct {
+	RoomID string `uri:"id" binding:"required,uuid"`
+}
