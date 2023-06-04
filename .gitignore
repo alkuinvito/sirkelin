@@ -1,5 +1,5 @@
 .env*
-sirkelin*
+backend*
 *key.json
 /frontend/node_modules
 /postgres-data
