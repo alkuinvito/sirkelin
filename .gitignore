@@ -1,5 +1,6 @@
 .env*
 *key.json
+/backend/backend
 /frontend/node_modules
 /postgres-data
 /.pnp
