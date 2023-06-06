@@ -13,3 +13,7 @@ type User struct {
 	Rooms     []*Room `gorm:"many2many:user_rooms"`
 	CreatedAt time.Time
 }
+
+type GetByIDParams struct {
+	ID string `uri:"id" binding:"required"`
+}

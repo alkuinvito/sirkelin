@@ -43,6 +43,7 @@ func (router *Router) Handle() *gin.Engine {
 	{
 		userGroup.Use(router.middleware.AuthenticatedUser())
 		userGroup.GET("/", router.user.GetAll)
+		userGroup.GET("/:id", router.user.GetByID)
 	}
 
 	return handler

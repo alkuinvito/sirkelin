@@ -14,7 +14,6 @@ type IUserRepository interface {
 	Get(db *gorm.DB) ([]models.User, error)
 	GetByID(db *gorm.DB, uid string) (*models.User, error)
 	GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error)
-	GetExcept(db *gorm.DB, uid string) ([]models.User, error)
 	Save(db *gorm.DB, user *models.User) error
 }
 
@@ -43,15 +42,6 @@ func (repo *UserRepository) GetByID(db *gorm.DB, uid string) (*models.User, erro
 func (repo *UserRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error) {
 	var result []models.User
 	err := db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (repo *UserRepository) GetExcept(db *gorm.DB, uid string) ([]models.User, error) {
-	var result []models.User
-	err := db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
 	if err != nil {
 		return nil, err
 	}
