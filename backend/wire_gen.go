@@ -9,12 +9,12 @@ package main
 import (
 	"github.com/google/wire"
 	"net/http"
-	"sirkelin/backend/app/auth/controller"
-	"sirkelin/backend/app/auth/repository"
-	"sirkelin/backend/app/auth/service"
 	controller2 "sirkelin/backend/app/room/controller"
 	repository2 "sirkelin/backend/app/room/repository"
 	service2 "sirkelin/backend/app/room/service"
+	"sirkelin/backend/app/user/controller"
+	"sirkelin/backend/app/user/repository"
+	"sirkelin/backend/app/user/service"
 	"sirkelin/backend/initializers"
 	"sirkelin/backend/middlewares"
 	"sirkelin/backend/router"
@@ -23,21 +23,21 @@ import (
 // Injectors from injector.go:
 
 func CreateHTTPServer() *http.Server {
-	authRepository := repository.NewAuthRepository()
+	userRepository := repository.NewUserRepository()
 	db := initializers.NewDB()
-	authService := service.NewAuthService(authRepository, db)
+	userService := service.NewUserService(userRepository, db)
 	roomRepository := repository2.NewRoomRepository()
 	roomService := service2.NewRoomService(roomRepository, db)
-	middleware := middlewares.NewMiddleware(authService, roomService)
-	authController := controller.NewAuthController(authService)
-	roomController := controller2.NewRoomController(authService, roomService)
-	routerRouter := router.NewRouter(middleware, authController, roomController)
+	middleware := middlewares.NewMiddleware(userService, roomService)
+	userController := controller.NewUserController(userService)
+	roomController := controller2.NewRoomController(userService, roomService)
+	routerRouter := router.NewRouter(middleware, userController, roomController)
 	server := NewServer(routerRouter)
 	return server
 }
 
 // injector.go:
 
-var authSet = wire.NewSet(repository.NewAuthRepository, wire.Bind(new(repository.IAuthRepository), new(*repository.AuthRepository)), service.NewAuthService, wire.Bind(new(service.IAuthService), new(*service.AuthService)), controller.NewAuthController, wire.Bind(new(controller.IAuthController), new(*controller.AuthController)))
+var userSet = wire.NewSet(repository.NewUserRepository, wire.Bind(new(repository.IUserRepository), new(*repository.UserRepository)), service.NewUserService, wire.Bind(new(service.IUserService), new(*service.UserService)), controller.NewUserController, wire.Bind(new(controller.IUserController), new(*controller.UserController)))
 
 var roomSet = wire.NewSet(repository2.NewRoomRepository, wire.Bind(new(repository2.IRoomRepository), new(*repository2.RoomRepository)), service2.NewRoomService, wire.Bind(new(service2.IRoomService), new(*service2.RoomService)), controller2.NewRoomController, wire.Bind(new(controller2.IRoomController), new(*controller2.RoomController)))

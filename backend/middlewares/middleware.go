@@ -3,13 +3,13 @@ package middlewares
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	authService "sirkelin/backend/app/auth/service"
 	roomService "sirkelin/backend/app/room/service"
+	userService "sirkelin/backend/app/user/service"
 	"sirkelin/backend/models"
 )
 
 type Middleware struct {
-	authService *authService.AuthService
+	userService *userService.UserService
 	roomService *roomService.RoomService
 }
 
@@ -18,16 +18,16 @@ type IMiddleware interface {
 	RoomPrivilege() gin.HandlerFunc
 }
 
-func NewMiddleware(authService *authService.AuthService, roomService *roomService.RoomService) *Middleware {
+func NewMiddleware(userService *userService.UserService, roomService *roomService.RoomService) *Middleware {
 	return &Middleware{
-		authService: authService,
+		userService: userService,
 		roomService: roomService,
 	}
 }
 
 func (middleware *Middleware) RoomAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := middleware.authService.VerifySessionToken(c)
+		_, err := middleware.userService.VerifySessionToken(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid session token",
@@ -53,7 +53,7 @@ func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
 			return
 		}
 
-		token, err := middleware.authService.VerifySessionToken(c)
+		token, err := middleware.userService.VerifySessionToken(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid session token",

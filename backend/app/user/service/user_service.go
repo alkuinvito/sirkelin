@@ -10,19 +10,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sirkelin/backend/app/auth/repository"
+	"sirkelin/backend/app/user/repository"
 
 	"firebase.google.com/go/auth"
 )
 
 const EXPIRES_IN = time.Hour * 24
 
-type AuthService struct {
-	repository *repository.AuthRepository
+type UserService struct {
+	repository *repository.UserRepository
 	db         *gorm.DB
 }
 
-type IAuthService interface {
+type IUserService interface {
 	getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error)
 	initClient(c *gin.Context) (*auth.Client, error)
 	revokeToken(c *gin.Context, client *auth.Client) error
@@ -32,14 +32,14 @@ type IAuthService interface {
 	VerifySessionToken(c *gin.Context) (*auth.Token, error)
 }
 
-func NewAuthService(repository *repository.AuthRepository, db *gorm.DB) *AuthService {
-	return &AuthService{
+func NewUserService(repository *repository.UserRepository, db *gorm.DB) *UserService {
+	return &UserService{
 		repository: repository,
 		db:         db,
 	}
 }
 
-func (service *AuthService) getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error) {
+func (service *UserService) getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error) {
 	bearerToken := c.GetHeader("Authorization")
 	tokenString := strings.Split(bearerToken, " ")
 
@@ -53,11 +53,11 @@ func (service *AuthService) getSessionToken(c *gin.Context, client *auth.Client)
 	return client.VerifySessionCookieAndCheckRevoked(c, tokenString[0])
 }
 
-func (service *AuthService) initClient(c *gin.Context) (*auth.Client, error) {
+func (service *UserService) initClient(c *gin.Context) (*auth.Client, error) {
 	return initializers.InitializeAppDefault().Auth(c)
 }
 
-func (service *AuthService) revokeToken(c *gin.Context, client *auth.Client) error {
+func (service *UserService) revokeToken(c *gin.Context, client *auth.Client) error {
 	token, err := service.getSessionToken(c, client)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (service *AuthService) revokeToken(c *gin.Context, client *auth.Client) err
 	return nil
 }
 
-func (service *AuthService) SignIn(c *gin.Context, tokenString string) (string, error) {
+func (service *UserService) SignIn(c *gin.Context, tokenString string) (string, error) {
 	client, err := service.initClient(c)
 	if err != nil {
 		return "", err
@@ -98,7 +98,7 @@ func (service *AuthService) SignIn(c *gin.Context, tokenString string) (string, 
 	return client.SessionCookie(c, tokenString, EXPIRES_IN)
 }
 
-func (service *AuthService) SignOut(c *gin.Context) error {
+func (service *UserService) SignOut(c *gin.Context) error {
 	client, err := service.initClient(c)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (service *AuthService) SignOut(c *gin.Context) error {
 	return service.revokeToken(c, client)
 }
 
-func (service *AuthService) verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error) {
+func (service *UserService) verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error) {
 	token, err := client.VerifyIDTokenAndCheckRevoked(c, tokenString)
 	if err != nil {
 		if err.Error() == "ID token has been revoked" {
@@ -123,7 +123,7 @@ func (service *AuthService) verifyIDToken(c *gin.Context, client *auth.Client, t
 	return token, err
 }
 
-func (service *AuthService) VerifySessionToken(c *gin.Context) (*auth.Token, error) {
+func (service *UserService) VerifySessionToken(c *gin.Context) (*auth.Token, error) {
 	client, err := service.initClient(c)
 	if err != nil {
 		return nil, err

@@ -2,25 +2,25 @@ package controller
 
 import (
 	"net/http"
-	authService "sirkelin/backend/app/auth/service"
 	roomService "sirkelin/backend/app/room/service"
+	userService "sirkelin/backend/app/user/service"
 	"sirkelin/backend/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 type RoomController struct {
-	authService *authService.AuthService
+	userService *userService.UserService
 	roomService *roomService.RoomService
 }
 
 type IRoomController interface {
-	CreateRoom(c*gin.Context)
+	CreateRoom(c *gin.Context)
 }
 
-func NewRoomController(authService *authService.AuthService, roomService *roomService.RoomService) *RoomController {
+func NewRoomController(userService *userService.UserService, roomService *roomService.RoomService) *RoomController {
 	return &RoomController{
-		authService: authService,
+		userService: userService,
 		roomService: roomService,
 	}
 }
@@ -36,7 +36,7 @@ func (controller *RoomController) CreateRoom(c *gin.Context) {
 		})
 	}
 
-	token, err := controller.authService.VerifySessionToken(c)
+	token, err := controller.userService.VerifySessionToken(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid bearer token",

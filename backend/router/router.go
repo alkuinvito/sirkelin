@@ -2,8 +2,8 @@ package router
 
 import (
 	"os"
-	authController "sirkelin/backend/app/auth/controller"
 	roomController "sirkelin/backend/app/room/controller"
+	userController "sirkelin/backend/app/user/controller"
 	"sirkelin/backend/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -11,14 +11,14 @@ import (
 
 type Router struct {
 	middleware *middlewares.Middleware
-	auth       *authController.AuthController
+	user       *userController.UserController
 	room       *roomController.RoomController
 }
 
-func NewRouter(middleware *middlewares.Middleware, auth *authController.AuthController, room *roomController.RoomController) *Router {
+func NewRouter(middleware *middlewares.Middleware, auth *userController.UserController, room *roomController.RoomController) *Router {
 	return &Router{
 		middleware: middleware,
-		auth:       auth,
+		user:       auth,
 		room:       room,
 	}
 }
@@ -29,8 +29,8 @@ func (router *Router) Handle() *gin.Engine {
 
 	authGroup := handler.Group("/auth")
 	{
-		authGroup.POST("/sign-in", router.auth.SignIn)
-		authGroup.POST("/sign-out", router.auth.SignOut)
+		authGroup.POST("/sign-in", router.user.SignIn)
+		authGroup.POST("/sign-out", router.user.SignOut)
 	}
 
 	roomGroup := handler.Group("/room")

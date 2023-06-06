@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-type AuthRepository struct {
+type UserRepository struct {
 }
 
-type IAuthRepository interface {
+type IUserRepository interface {
 	Get(db *gorm.DB) ([]models.User, error)
 	GetByID(db *gorm.DB, uid string) (*models.User, error)
 	GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error)
@@ -18,11 +18,11 @@ type IAuthRepository interface {
 	Save(db *gorm.DB, user *models.User) error
 }
 
-func NewAuthRepository() *AuthRepository {
-	return &AuthRepository{}
+func NewUserRepository() *UserRepository {
+	return &UserRepository{}
 }
 
-func (repo *AuthRepository) Get(db *gorm.DB) ([]models.User, error) {
+func (repo *UserRepository) Get(db *gorm.DB) ([]models.User, error) {
 	var result []models.User
 	err := db.Select("id", "fullname", "picture").Find(&result).Error
 	if err != nil {
@@ -31,7 +31,7 @@ func (repo *AuthRepository) Get(db *gorm.DB) ([]models.User, error) {
 	return result, nil
 }
 
-func (repo *AuthRepository) GetByID(db *gorm.DB, uid string) (*models.User, error) {
+func (repo *UserRepository) GetByID(db *gorm.DB, uid string) (*models.User, error) {
 	var result models.User
 	err := db.Where("id = ?", uid).First(&result).Error
 	if err != nil {
@@ -40,7 +40,7 @@ func (repo *AuthRepository) GetByID(db *gorm.DB, uid string) (*models.User, erro
 	return &result, nil
 }
 
-func (repo *AuthRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error) {
+func (repo *UserRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error) {
 	var result []models.User
 	err := db.Select("id", "fullname", "picture").Where("UPPER(fullname) LIKE ?", "%"+strings.ToUpper(keyword)+"%").Limit(5).Find(&result).Error
 	if err != nil {
@@ -49,7 +49,7 @@ func (repo *AuthRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.
 	return result, nil
 }
 
-func (repo *AuthRepository) GetExcept(db *gorm.DB, uid string) ([]models.User, error) {
+func (repo *UserRepository) GetExcept(db *gorm.DB, uid string) ([]models.User, error) {
 	var result []models.User
 	err := db.Select("id", "fullname", "picture").Not("id = ?", uid).Find(&result).Error
 	if err != nil {
@@ -58,6 +58,6 @@ func (repo *AuthRepository) GetExcept(db *gorm.DB, uid string) ([]models.User, e
 	return result, nil
 }
 
-func (repo *AuthRepository) Save(db *gorm.DB, user *models.User) error {
+func (repo *UserRepository) Save(db *gorm.DB, user *models.User) error {
 	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
 }

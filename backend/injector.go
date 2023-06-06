@@ -6,9 +6,9 @@ package main
 import (
 	"github.com/google/wire"
 	"net/http"
-	authController "sirkelin/backend/app/auth/controller"
-	authRepository "sirkelin/backend/app/auth/repository"
-	authService "sirkelin/backend/app/auth/service"
+	userController "sirkelin/backend/app/user/controller"
+	userRepository "sirkelin/backend/app/user/repository"
+	userService "sirkelin/backend/app/user/service"
 	"sirkelin/backend/middlewares"
 
 	roomController "sirkelin/backend/app/room/controller"
@@ -18,13 +18,13 @@ import (
 	"sirkelin/backend/router"
 )
 
-var authSet = wire.NewSet(
-	authRepository.NewAuthRepository,
-	wire.Bind(new(authRepository.IAuthRepository), new(*authRepository.AuthRepository)),
-	authService.NewAuthService,
-	wire.Bind(new(authService.IAuthService), new(*authService.AuthService)),
-	authController.NewAuthController,
-	wire.Bind(new(authController.IAuthController), new(*authController.AuthController)),
+var userSet = wire.NewSet(
+	userRepository.NewUserRepository,
+	wire.Bind(new(userRepository.IUserRepository), new(*userRepository.UserRepository)),
+	userService.NewUserService,
+	wire.Bind(new(userService.IUserService), new(*userService.UserService)),
+	userController.NewUserController,
+	wire.Bind(new(userController.IUserController), new(*userController.UserController)),
 )
 
 var roomSet = wire.NewSet(
@@ -42,7 +42,7 @@ func CreateHTTPServer() *http.Server {
 		NewServer,
 		middlewares.NewMiddleware,
 		router.NewRouter,
-		authSet,
+		userSet,
 		roomSet,
 	))
 	return nil
