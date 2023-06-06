@@ -14,7 +14,7 @@ type Middleware struct {
 }
 
 type IMiddleware interface {
-	UserAuthenticated() gin.HandlerFunc
+	AuthenticatedUser() gin.HandlerFunc
 	RoomPrivilege() gin.HandlerFunc
 }
 
@@ -25,7 +25,7 @@ func NewMiddleware(userService *userService.UserService, roomService *roomServic
 	}
 }
 
-func (middleware *Middleware) UserAuthenticated() gin.HandlerFunc {
+func (middleware *Middleware) AuthenticatedUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_, err := middleware.userService.VerifySessionToken(c)
 		if err != nil {
