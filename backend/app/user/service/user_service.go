@@ -23,6 +23,7 @@ type UserService struct {
 }
 
 type IUserService interface {
+	GetAll() ([]models.User, error)
 	getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error)
 	initClient(c *gin.Context) (*auth.Client, error)
 	revokeToken(c *gin.Context, client *auth.Client) error
@@ -37,6 +38,15 @@ func NewUserService(repository *repository.UserRepository, db *gorm.DB) *UserSer
 		repository: repository,
 		db:         db,
 	}
+}
+
+func (service *UserService) GetAll() ([]models.User, error) {
+	tx := service.db
+	users, err := service.repository.Get(tx)
+	if err != nil {
+		return []models.User{}, err
+	}
+	return users, nil
 }
 
 func (service *UserService) getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error) {

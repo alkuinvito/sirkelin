@@ -18,6 +18,7 @@ type UserController struct {
 }
 
 type IUserController interface {
+	GetAll(c *gin.Context)
 	SignIn(c *gin.Context)
 	SignOut(c *gin.Context)
 }
@@ -26,6 +27,22 @@ func NewUserController(userService *service.UserService) *UserController {
 	return &UserController{
 		service: userService,
 	}
+}
+
+func (controller *UserController) GetAll(c *gin.Context) {
+	users, err := controller.service.GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to retrieve users",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"users": users,
+		},
+	})
 }
 
 func (controller *UserController) SignIn(c *gin.Context) {

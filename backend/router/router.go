@@ -35,8 +35,14 @@ func (router *Router) Handle() *gin.Engine {
 
 	roomGroup := handler.Group("/room")
 	{
-		roomGroup.Use(router.middleware.RoomAccess())
+		roomGroup.Use(router.middleware.UserAuthenticated())
 		roomGroup.POST("/", router.room.CreateRoom)
+	}
+
+	userGroup := handler.Group("/user")
+	{
+		userGroup.Use(router.middleware.UserAuthenticated())
+		userGroup.GET("/", router.user.GetAll)
 	}
 
 	return handler
