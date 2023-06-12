@@ -17,6 +17,7 @@ type RoomService struct {
 type IRoomService interface {
 	CheckRoomParticipant(roomID, uid string) (bool, error)
 	Create(users []*models.User) (string, error)
+	GetPrivateRooms(uid string) ([]models.RoomList, error)
 	GetRooms(uid string) ([]models.RoomList, error)
 }
 
@@ -41,6 +42,15 @@ func (service *RoomService) Create(users []*models.User) (string, error) {
 		return "", err
 	}
 	return roomID, nil
+}
+
+func (service *RoomService) GetPrivateRooms(uid string) ([]models.RoomList, error) {
+	tx := service.db
+	rooms, err := service.repository.GetPrivateRooms(tx, uid)
+	if err != nil {
+		return []models.RoomList{}, err
+	}
+	return rooms, nil
 }
 
 func (service *RoomService) GetRooms(uid string) ([]models.RoomList, error) {

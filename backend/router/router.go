@@ -37,6 +37,7 @@ func (router *Router) Handle() *gin.Engine {
 	{
 		roomGroup.Use(router.middleware.AuthenticatedUser())
 		roomGroup.GET("/", router.room.GetRooms)
+		roomGroup.GET("/private", router.room.GetPrivateRooms)
 		roomGroup.POST("/", router.room.CreateRoom)
 	}
 
