@@ -12,7 +12,7 @@ type RoomRepository struct {
 type IRoomRepository interface {
 	Count(db *gorm.DB, roomID, uid string) (int, error)
 	Create(db *gorm.DB, room *models.Room) error
-	GetByUID(db *gorm.DB, uid string) ([]models.Room, error)
+	GetRooms(db *gorm.DB, uid string) ([]models.RoomList, error)
 	Peek(db *gorm.DB, room *models.Room) error
 }
 
@@ -37,11 +37,11 @@ func (repo *RoomRepository) Create(db *gorm.DB, room *models.Room) error {
 	return nil
 }
 
-func (repo *RoomRepository) GetByUID(db *gorm.DB, uid string) ([]models.Room, error) {
-	var result []models.Room
+func (repo *RoomRepository) GetRooms(db *gorm.DB, uid string) ([]models.RoomList, error) {
+	var result []models.RoomList
 	err := db.Table("user_rooms").Where("user_rooms.user_id = ?", uid).Joins("join rooms on rooms.id = user_rooms.room_id").Where("is_private = ?", false).Scan(&result).Error
 	if err != nil {
-		return []models.Room{}, err
+		return []models.RoomList{}, err
 	}
 	return result, nil
 }

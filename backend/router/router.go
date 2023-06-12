@@ -36,6 +36,7 @@ func (router *Router) Handle() *gin.Engine {
 	roomGroup := handler.Group("/room")
 	{
 		roomGroup.Use(router.middleware.AuthenticatedUser())
+		roomGroup.GET("/", router.room.GetRooms)
 		roomGroup.POST("/", router.room.CreateRoom)
 	}
 

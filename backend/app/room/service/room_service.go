@@ -17,7 +17,7 @@ type RoomService struct {
 type IRoomService interface {
 	CheckRoomParticipant(roomID, uid string) (bool, error)
 	Create(users []*models.User) (string, error)
-	GetByUID(uid string) ([]models.Room, error)
+	GetRooms(uid string) ([]models.RoomList, error)
 }
 
 func NewRoomService(repository *repository.RoomRepository, db *gorm.DB) *RoomService {
@@ -43,11 +43,11 @@ func (service *RoomService) Create(users []*models.User) (string, error) {
 	return roomID, nil
 }
 
-func (service *RoomService) GetByUID(uid string) ([]models.Room, error) {
+func (service *RoomService) GetRooms(uid string) ([]models.RoomList, error) {
 	tx := service.db
-	rooms, err := service.repository.GetByUID(tx, uid)
+	rooms, err := service.repository.GetRooms(tx, uid)
 	if err != nil {
-		return []models.Room{}, err
+		return []models.RoomList{}, err
 	}
 	return rooms, nil
 }

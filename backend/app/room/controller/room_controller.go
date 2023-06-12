@@ -16,6 +16,7 @@ type RoomController struct {
 
 type IRoomController interface {
 	CreateRoom(c *gin.Context)
+	GetRooms(c *gin.Context)
 }
 
 func NewRoomController(userService *userService.UserService, roomService *roomService.RoomService) *RoomController {
@@ -58,5 +59,29 @@ func (controller *RoomController) CreateRoom(c *gin.Context) {
 		"data": gin.H{
 			"id": roomID,
 		},
+	})
+}
+
+func (controller *RoomController) GetRooms(c *gin.Context) {
+	var err error
+
+	token, err := controller.userService.VerifySessionToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid bearer token",
+		})
+		return
+	}
+
+	rooms, err := controller.roomService.GetRooms(token.UID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to retrieve rooms",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": rooms,
 	})
 }

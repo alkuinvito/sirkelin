@@ -22,3 +22,10 @@ type CreateRoomParams struct {
 type RoomIDParams struct {
 	RoomID string `uri:"id" binding:"required,uuid"`
 }
+
+type RoomList struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Picture   string `json:"picture"`
+	IsPrivate bool   `json:"is_private"`
+}
