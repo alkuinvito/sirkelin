@@ -29,3 +29,8 @@ type RoomList struct {
 	Picture   string `json:"picture"`
 	IsPrivate bool   `json:"is_private"`
 }
+
+type UpdateRoomSchema struct {
+	Name    string `json:"name" binding:"required,min=3,max=16"`
+	Picture string `json:"picture" binding:"url"`
+}

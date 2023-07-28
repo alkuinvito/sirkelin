@@ -7,11 +7,12 @@ import (
 
 func init() {
 	initializers.LoadEnvVar()
-	initializers.ConnectToDB()
 }
 
 func main() {
-	initializers.DB.AutoMigrate(&models.User{})
-	initializers.DB.AutoMigrate(&models.Message{})
-	initializers.DB.AutoMigrate(&models.Room{})
+	db := initializers.NewDB()
+	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.Message{})
+	db.AutoMigrate(&models.Room{})
+	db.AutoMigrate(&models.UserRooms{})
 }

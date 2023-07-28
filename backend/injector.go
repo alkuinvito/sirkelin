@@ -9,6 +9,7 @@ import (
 	userController "sirkelin/backend/app/user/controller"
 	userRepository "sirkelin/backend/app/user/repository"
 	userService "sirkelin/backend/app/user/service"
+	"sirkelin/backend/app/websocket"
 	"sirkelin/backend/middlewares"
 
 	roomController "sirkelin/backend/app/room/controller"
@@ -38,6 +39,7 @@ var roomSet = wire.NewSet(
 
 func CreateHTTPServer() *http.Server {
 	panic(wire.Build(
+		websocket.NewHub,
 		initializers.NewDB,
 		NewServer,
 		middlewares.NewMiddleware,

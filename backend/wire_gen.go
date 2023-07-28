@@ -15,6 +15,7 @@ import (
 	"sirkelin/backend/app/user/controller"
 	"sirkelin/backend/app/user/repository"
 	"sirkelin/backend/app/user/service"
+	"sirkelin/backend/app/websocket"
 	"sirkelin/backend/initializers"
 	"sirkelin/backend/middlewares"
 	"sirkelin/backend/router"
@@ -30,8 +31,9 @@ func CreateHTTPServer() *http.Server {
 	roomService := service2.NewRoomService(roomRepository, db)
 	middleware := middlewares.NewMiddleware(userService, roomService)
 	userController := controller.NewUserController(userService)
-	roomController := controller2.NewRoomController(userService, roomService)
-	routerRouter := router.NewRouter(middleware, userController, roomController)
+	hub := websocket.NewHub()
+	roomController := controller2.NewRoomController(userService, roomService, hub)
+	routerRouter := router.NewRouter(middleware, userController, roomController, hub)
 	server := NewServer(routerRouter)
 	return server
 }
