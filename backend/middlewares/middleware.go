@@ -15,7 +15,7 @@ type Middleware struct {
 
 type IMiddleware interface {
 	AuthenticatedUser() gin.HandlerFunc
-	RoomPrivilege() gin.HandlerFunc
+	AuthorizedUser() gin.HandlerFunc
 }
 
 func NewMiddleware(userService *userService.UserService, roomService *roomService.RoomService) *Middleware {
@@ -39,7 +39,7 @@ func (middleware *Middleware) AuthenticatedUser() gin.HandlerFunc {
 	}
 }
 
-func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
+func (middleware *Middleware) AuthorizedUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var param models.RoomIDParams
 		var err error
@@ -74,8 +74,8 @@ func (middleware *Middleware) RoomPrivilege() gin.HandlerFunc {
 		}
 
 		if !isParticipant {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "user is not a participant of this room",
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "room with this id does not exist",
 			})
 			c.Abort()
 			return
