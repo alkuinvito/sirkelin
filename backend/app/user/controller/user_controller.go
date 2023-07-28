@@ -25,6 +25,7 @@ type IUserController interface {
 	GetByID(c *gin.Context)
 	SignIn(c *gin.Context)
 	SignOut(c *gin.Context)
+	UpdateProfile(c *gin.Context)
 }
 
 func NewUserController(userService *service.UserService) *UserController {
@@ -43,9 +44,7 @@ func (controller *UserController) GetAll(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": gin.H{
-			"users": users,
-		},
+		"data": users,
 	})
 }
 
@@ -54,7 +53,7 @@ func (controller *UserController) GetByID(c *gin.Context) {
 	err := c.ShouldBindUri(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid user id parameter",
+			"error": "invalid user id",
 		})
 		return
 	}
@@ -63,7 +62,7 @@ func (controller *UserController) GetByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "user with this is is not exist",
+				"error": "user with this id does not exist",
 			})
 			return
 		}
@@ -74,9 +73,7 @@ func (controller *UserController) GetByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": gin.H{
-			"user": user,
-		},
+		"data": user,
 	})
 }
 
@@ -112,4 +109,53 @@ func (controller *UserController) SignOut(c *gin.Context) {
 	}
 
 	c.SetCookie("session", "", 0, "/", os.Getenv("APP_HOST"), true, true)
+}
+
+func (controller *UserController) UpdateProfile(c *gin.Context) {
+	var err error
+	var param models.GetByIDParams
+	var req models.UpdateProfileSchema
+
+	err = c.ShouldBindUri(&param)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid user id",
+		})
+		return
+	}
+
+	err = c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := controller.service.VerifySessionToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid session token",
+		})
+		return
+	}
+
+	if token.UID != param.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "user can only update their own profile",
+		})
+		return
+	}
+
+	err = controller.service.UpdateProfile(param.ID, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to update profile",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": "profile updated successfully",
+	})
 }

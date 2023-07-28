@@ -30,6 +30,7 @@ type IUserService interface {
 	revokeToken(c *gin.Context, client *auth.Client) error
 	SignIn(c *gin.Context, tokenString string) (string, error)
 	SignOut(c *gin.Context) error
+	UpdateProfile(id string, data models.UpdateProfileSchema) error
 	verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error)
 	VerifySessionToken(c *gin.Context) (*auth.Token, error)
 }
@@ -124,6 +125,13 @@ func (service *UserService) SignOut(c *gin.Context) error {
 		return err
 	}
 	return service.revokeToken(c, client)
+}
+
+func (service *UserService) UpdateProfile(id string, data models.UpdateProfileSchema) error {
+	updated := &models.User{ID: id, Username: data.Username, Fullname: data.Fullname, Picture: data.Picture}
+	tx := service.db.Begin()
+	defer initializers.CommitOrRollback(tx)
+	return service.repository.Update(tx, updated)
 }
 
 func (service *UserService) verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error) {

@@ -15,6 +15,7 @@ type IUserRepository interface {
 	GetByID(db *gorm.DB, uid string) (*models.User, error)
 	GetByKeyword(db *gorm.DB, keyword string) ([]models.User, error)
 	Save(db *gorm.DB, user *models.User) error
+	Update(db *gorm.DB, user *models.User) error
 }
 
 func NewUserRepository() *UserRepository {
@@ -50,4 +51,8 @@ func (repo *UserRepository) GetByKeyword(db *gorm.DB, keyword string) ([]models.
 
 func (repo *UserRepository) Save(db *gorm.DB, user *models.User) error {
 	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&user).Error
+}
+
+func (repo *UserRepository) Update(db *gorm.DB, user *models.User) error {
+	return db.Model(&models.User{}).Where("id = ?", user.ID).Updates(user).Error
 }
