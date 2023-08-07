@@ -71,7 +71,7 @@ func (service *UserService) getSessionToken(c *gin.Context, client *auth.Client)
 		}
 		return client.VerifySessionCookieAndCheckRevoked(c, cookies)
 	}
-	return client.VerifySessionCookieAndCheckRevoked(c, tokenString[0])
+	return client.VerifySessionCookieAndCheckRevoked(c, tokenString[1])
 }
 
 func (service *UserService) initClient(c *gin.Context) (*auth.Client, error) {

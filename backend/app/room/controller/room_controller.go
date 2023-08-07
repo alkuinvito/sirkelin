@@ -39,7 +39,41 @@ func NewRoomController(userService *userService.UserService, roomService *roomSe
 }
 
 func (controller *RoomController) Connect(c *gin.Context) {
-	websocket.ServeWs(controller.hub, c.Writer, c.Request)
+	var err error
+	var query models.RoomIDQuery
+
+	err = c.ShouldBind(&query)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid room id",
+		})
+		return
+	}
+
+	token, err := controller.userService.VerifySessionToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid bearer token",
+		})
+		return
+	}
+
+	isParticipant, err := controller.roomService.CheckRoomParticipant(query.RoomID, token.UID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "unable to check participants in current room",
+		})
+		return
+	}
+
+	if !isParticipant {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "room with this id does not exist",
+		})
+		return
+	}
+
+	websocket.ServeWs(controller.hub, c.Writer, c.Request, controller.roomService, query.RoomID, token.UID)
 }
 
 func (controller *RoomController) CreateRoom(c *gin.Context) {
@@ -185,48 +219,6 @@ func (controller *RoomController) GetRooms(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": rooms,
-	})
-}
-
-func (controller *RoomController) PushMessage(c *gin.Context) {
-	var err error
-	var param models.RoomIDParams
-	var req models.SendMessageParams
-
-	err = c.ShouldBindUri(&param)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid room id",
-		})
-		return
-	}
-
-	err = c.ShouldBind(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	token, err := controller.userService.VerifySessionToken(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "invalid bearer token",
-		})
-		return
-	}
-
-	messageID, err := controller.roomService.PushMessage(token.UID, param.RoomID, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to push message",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": messageID,
 	})
 }
 

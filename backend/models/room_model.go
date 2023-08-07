@@ -23,6 +23,10 @@ type RoomIDParams struct {
 	RoomID string `uri:"id" binding:"required,uuid"`
 }
 
+type RoomIDQuery struct {
+	RoomID string `form:"id" binding:"required,uuid"`
+}
+
 type RoomList struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

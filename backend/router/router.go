@@ -40,6 +40,7 @@ func (router *Router) Handle() *gin.Engine {
 
 	roomGroup := handler.Group("/room")
 	{
+		roomGroup.GET("/connect", router.room.Connect)
 		roomGroup.Use(router.middleware.AuthenticatedUser())
 		roomGroup.POST("/", router.room.CreateRoom)
 		roomGroup.GET("/private", router.room.GetPrivateRooms)
@@ -48,7 +49,6 @@ func (router *Router) Handle() *gin.Engine {
 		roomGroup.Use(router.middleware.AuthorizedUser())
 		roomGroup.DELETE("/:id", router.room.Delete)
 		roomGroup.GET("/:id", router.room.GetRoomById)
-		roomGroup.POST("/:id/message", router.room.PushMessage)
 		roomGroup.PUT("/:id", router.room.UpdateRoom)
 	}
 
