@@ -28,7 +28,7 @@ type IUserService interface {
 	getSessionToken(c *gin.Context, client *auth.Client) (*auth.Token, error)
 	initClient(c *gin.Context) (*auth.Client, error)
 	revokeToken(c *gin.Context, client *auth.Client) error
-	SignIn(c *gin.Context, tokenString string) (string, error)
+	SignIn(c *gin.Context, tokenString string) (*models.User, string, error)
 	SignOut(c *gin.Context) error
 	UpdateProfile(id string, data models.UpdateProfileSchema) error
 	verifyIDToken(c *gin.Context, client *auth.Client, tokenString string) (*auth.Token, error)
@@ -91,32 +91,45 @@ func (service *UserService) revokeToken(c *gin.Context, client *auth.Client) err
 	return nil
 }
 
-func (service *UserService) SignIn(c *gin.Context, tokenString string) (string, error) {
+func (service *UserService) SignIn(c *gin.Context, tokenString string) (*models.User, string, error) {
 	client, err := service.initClient(c)
 	if err != nil {
-		return "", err
+		return &models.User{}, "", err
 	}
 
 	token, err := service.verifyIDToken(c, client, tokenString)
 	if err != nil {
-		return "", err
+		return &models.User{}, "", err
 	}
 
 	tx := service.db.Begin()
 	defer initializers.CommitOrRollback(tx)
-	err = service.repository.Save(tx,
-		&models.User{
-			ID:       token.Subject,
-			Fullname: token.Claims["name"].(string),
-			Picture:  token.Claims["picture"].(string),
-			Email:    token.Claims["email"].(string),
-		},
-	)
+	user, err := service.repository.GetByID(tx, token.Subject)
 	if err != nil {
-		return "", err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = service.repository.Save(tx,
+				&models.User{
+					ID:       token.Subject,
+					Fullname: token.Claims["name"].(string),
+					Picture:  token.Claims["picture"].(string),
+					Email:    token.Claims["email"].(string),
+				},
+			)
+
+			if err != nil {
+				return &models.User{}, "", err
+			}
+		} else {
+			return &models.User{}, "", err
+		}
 	}
 
-	return client.SessionCookie(c, tokenString, EXPIRES_IN)
+	if err != nil {
+		return &models.User{}, "", err
+	}
+
+	session, err := client.SessionCookie(c, tokenString, EXPIRES_IN)
+	return user, session, err
 }
 
 func (service *UserService) SignOut(c *gin.Context) error {

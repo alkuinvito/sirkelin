@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"github.com/gorilla/csrf"
 	"gorm.io/gorm"
 	"net/http"
 	"os"
@@ -23,6 +24,7 @@ type UserController struct {
 type IUserController interface {
 	GetAll(c *gin.Context)
 	GetByID(c *gin.Context)
+	GetCsrfToken(c *gin.Context)
 	SignIn(c *gin.Context)
 	SignOut(c *gin.Context)
 	UpdateProfile(c *gin.Context)
@@ -77,6 +79,14 @@ func (controller *UserController) GetByID(c *gin.Context) {
 	})
 }
 
+func (controller *UserController) GetCsrfToken(c *gin.Context) {
+	csrfToken := csrf.Token(c.Request)
+	c.Header("X-CSRF-TOKEN", csrfToken)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "csrf created successfully",
+	})
+}
+
 func (controller *UserController) SignIn(c *gin.Context) {
 	var req GetSessionParams
 	var err error
@@ -89,15 +99,18 @@ func (controller *UserController) SignIn(c *gin.Context) {
 		return
 	}
 
-	session, err := controller.service.SignIn(c, req.IDToken)
+	user, session, err := controller.service.SignIn(c, req.IDToken)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid request body",
+			"error": "invalid id token",
 		})
 		return
 	}
 
 	c.SetCookie("session", session, int(service.EXPIRES_IN), "/", os.Getenv("APP_HOST"), true, true)
+	c.JSON(http.StatusOK, gin.H{
+		"data": user,
+	})
 }
 
 func (controller *UserController) SignOut(c *gin.Context) {

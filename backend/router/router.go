@@ -30,10 +30,13 @@ func (router *Router) Handle() *gin.Engine {
 	handler := gin.Default()
 	gin.SetMode(os.Getenv("APP_MODE"))
 
+	handler.Use(router.middleware.CSRF())
+
 	go router.hub.Run()
 
 	authGroup := handler.Group("/auth")
 	{
+		authGroup.GET("/csrf", router.user.GetCsrfToken)
 		authGroup.POST("/sign-in", router.user.SignIn)
 		authGroup.POST("/sign-out", router.user.SignOut)
 	}
