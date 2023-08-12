@@ -107,6 +107,7 @@ func (controller *UserController) SignIn(c *gin.Context) {
 		return
 	}
 
+	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("session", session, int(service.EXPIRES_IN), "/", os.Getenv("APP_HOST"), true, true)
 	c.JSON(http.StatusOK, gin.H{
 		"data": user,
