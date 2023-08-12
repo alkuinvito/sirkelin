@@ -45,7 +45,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${APP_HOST}`)"
     volumes:
-      - ./frontend/src:/app/src
+      - ./frontend/app:/app/app
+      - ./frontend/components:/app/components
+      - ./frontend/contexts:/app/contexts
+      - ./frontend/hooks:/app/hooks
+      - ./frontend/lib:/app/lib
       - ./frontend/public:/app/public
+      - ./frontend/src:/app/src
     depends_on:
       - traefik

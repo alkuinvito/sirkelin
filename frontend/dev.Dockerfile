@@ -1,11 +1,11 @@
-FROM node:19-alpine
+FROM node:20-alpine3.17
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN yarn --frozen-lockfile
 
-COPY .env.local ./.env.local
-COPY next.config.js postcss.config.js jsconfig.json tailwind.config.js ./
+COPY .env.local ./
+COPY .eslintrc.json jsconfig.json next.config.js postcss.config.js tailwind.config.js ./
 
-CMD ["npm", "run", "dev"]
+CMD ["yarn", "dev"]
